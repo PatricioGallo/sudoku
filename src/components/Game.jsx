@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { LEVELS } from '../sudoku/generator.js'
-import * as api from '@api'
+import { submitResult } from '../offline.js'
 import { formatTime } from '../format.js'
 import Ranking from './Ranking.jsx'
 
 const MAX_HINTS = 3
 
-export default function Game({ game, profile, onProgress, onNewGame, onExit }) {
+export default function Game({ game, profile, onProgress, onQueued, onNewGame, onExit }) {
   // `game` trae el tablero y, si se retoma, el progreso guardado
   const { puzzle, solution, level } = game
   const [values, setValues] = useState(() => (game.values ? game.values.slice() : puzzle.slice()))
@@ -50,9 +50,13 @@ export default function Game({ game, profile, onProgress, onNewGame, onExit }) {
     if (!saved.current) {
       saved.current = true
       setSaveState({ status: 'saving' })
-      api
-        .saveResult(profile.id, level, { seconds, errors, hintsUsed: MAX_HINTS - hintsLeft })
-        .then((r) => setSaveState({ status: 'saved', ...r }))
+      submitResult(profile.id, level, { seconds, errors, hintsUsed: MAX_HINTS - hintsLeft })
+        .then((r) => {
+          if (r.queued) {
+            setSaveState({ status: 'queued' })
+            onQueued?.()
+          } else setSaveState({ status: 'saved', ...r })
+        })
         .catch((e) => setSaveState({ status: 'error', message: e.message }))
     }
   }, [values]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -253,6 +257,11 @@ export default function Game({ game, profile, onProgress, onNewGame, onExit }) {
                 : '.'}
             </p>
             {saveState.status === 'saving' && <p className="win-detail">Guardando tu tiempo…</p>}
+            {saveState.status === 'queued' && (
+              <p className="win-offline">
+                Estás sin conexión. Tu tiempo quedó guardado en el celular y se sube solo cuando vuelva internet.
+              </p>
+            )}
             {saveState.status === 'error' && (
               <p className="form-error">No se pudo guardar el tiempo: {saveState.message}</p>
             )}

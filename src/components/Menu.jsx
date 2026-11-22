@@ -4,13 +4,25 @@ import { LEVELS } from '../sudoku/generator.js'
 import { formatTime } from '../format.js'
 import Ranking from './Ranking.jsx'
 import { progressPercent } from '../progress.js'
+import { cachedBests, cacheBests, pendingResults } from '../offline.js'
 
 export default function Menu({ profile, current, onResume, onStart }) {
-  const [bests, setBests] = useState({})
+  const [bests, setBests] = useState(() => cachedBests(profile.id))
 
   useEffect(() => {
-    api.myBests(profile.id).then(setBests).catch(() => {})
+    api
+      .myBests(profile.id)
+      .then((b) => {
+        setBests(b)
+        cacheBests(profile.id, b)
+      })
+      .catch(() => {})
   }, [profile.id])
+
+  // Sumar las partidas jugadas sin conexión que todavía no se subieron
+  const shownBests = { ...bests }
+  for (const r of pendingResults(profile.id))
+    if (!shownBests[r.level] || r.seconds < shownBests[r.level]) shownBests[r.level] = r.seconds
 
   return (
     <main className="menu">
@@ -47,7 +59,7 @@ export default function Menu({ profile, current, onResume, onStart }) {
             </span>
             <span className="level-name">{label}</span>
             <span className="level-meta">{clues} números de arranque</span>
-            <span className="level-best">{bests[key] ? `Mejor: ${formatTime(bests[key])}` : 'Sin récord'}</span>
+            <span className="level-best">{shownBests[key] ? `Mejor: ${formatTime(shownBests[key])}` : 'Sin récord'}</span>
           </button>
         ))}
       </div>

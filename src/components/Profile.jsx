@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import * as api from '@api'
 import Avatar from './Avatar.jsx'
+import { cacheProfile } from '../offline.js'
 
 export default function Profile({ profile, onChange, onBack }) {
   const fileRef = useRef(null)
@@ -151,7 +152,13 @@ export default function Profile({ profile, onChange, onBack }) {
         </button>
       </form>
 
-      <button className="btn btn-danger" onClick={() => api.signOut()}>
+      <button
+        className="btn btn-danger"
+        onClick={() => {
+          cacheProfile(null)
+          api.signOut()
+        }}
+      >
         Cerrar sesión
       </button>
     </main>

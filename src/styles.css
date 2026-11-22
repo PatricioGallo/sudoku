@@ -851,3 +851,25 @@ button:focus-visible, input:focus-visible {
 .dialog p { margin: 0 0 18px; color: var(--ink-soft); line-height: 1.45; }
 .dialog-actions { display: flex; flex-direction: column; gap: 10px; }
 .dialog .btn-text { color: var(--ink-soft); padding: 10px; }
+
+/* ---------- Sin conexión ---------- */
+.netbar {
+  margin: -4px 0 12px;
+  padding: 9px 12px;
+  border-radius: 12px;
+  background: rgb(255 194 51 / 0.14);
+  color: #ffe3a0;
+  font-size: 0.88rem;
+  line-height: 1.35;
+}
+.netbar.is-syncing { background: rgb(43 217 160 / 0.14); color: #9ff0d2; }
+.stale { margin: 0 0 8px; font-size: 0.82rem; color: var(--text-dim); }
+.win .stale { color: var(--ink-soft); }
+.win-offline {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--saffron-soft);
+  color: var(--ink);
+  line-height: 1.4;
+}

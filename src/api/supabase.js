@@ -99,11 +99,18 @@ export async function changePassword(username, current, next) {
   check(await sb.auth.updateUser({ password: next }))
 }
 
-export async function saveResult(userId, level, { seconds, errors, hintsUsed }) {
+export async function saveResult(userId, level, { seconds, errors, hintsUsed, created_at }) {
   const row = check(
     await sb
       .from('results')
-      .insert({ user_id: userId, level, seconds: Math.max(1, seconds), errors, hints_used: hintsUsed })
+      .insert({
+        user_id: userId,
+        level,
+        seconds: Math.max(1, seconds),
+        errors,
+        hints_used: hintsUsed,
+        ...(created_at ? { created_at } : {}),
+      })
       .select()
       .single()
   )

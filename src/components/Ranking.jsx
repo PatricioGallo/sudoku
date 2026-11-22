@@ -4,6 +4,7 @@ import { LEVELS } from '../sudoku/generator.js'
 import { formatTime } from '../format.js'
 import { displayName } from '../api/shared.js'
 import Avatar from './Avatar.jsx'
+import { cachedRanking, cacheRanking, isNetworkError } from '../offline.js'
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
 
@@ -12,15 +13,26 @@ export default function Ranking({ profile, initialLevel = 'principiante', initia
   const [level, setLevel] = useState(initialLevel)
   const [rows, setRows] = useState(null)
   const [error, setError] = useState('')
+  const [stale, setStale] = useState(false) // mostrando datos guardados, sin conexión
 
   useEffect(() => {
     let alive = true
-    setRows(null)
+    const cached = cachedRanking(scope, level, profile.id)
+    setRows(cached)
+    setStale(false)
     setError('')
     const load = scope === 'global' ? api.globalRanking(level) : api.myRanking(profile.id, level)
     load
-      .then((r) => alive && setRows(r))
-      .catch((e) => alive && setError(e.message))
+      .then((r) => {
+        if (!alive) return
+        setRows(r)
+        cacheRanking(scope, level, profile.id, r)
+      })
+      .catch((e) => {
+        if (!alive) return
+        if (cached && isNetworkError(e)) setStale(true)
+        else setError(isNetworkError(e) ? 'Sin conexión. El ranking se carga cuando vuelva internet.' : e.message)
+      })
     return () => {
       alive = false
     }
@@ -54,6 +66,7 @@ export default function Ranking({ profile, initialLevel = 'principiante', initia
         ))}
       </div>
 
+      {stale && <p className="stale">Sin conexión: mostrando lo último que se cargó.</p>}
       {error ? (
         <p className="empty">{error}</p>
       ) : rows === null ? (

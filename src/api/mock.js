@@ -6,6 +6,11 @@ export const configured = true
 const KEY = 'sudoku.mockdb'
 const listeners = new Set()
 const wait = () => new Promise((r) => setTimeout(r, 120))
+// Simula la red: falla igual que Supabase cuando no hay conexión
+const net = async () => {
+  await wait()
+  if (!navigator.onLine) throw new Error('Sin conexión. Revisá internet y probá de nuevo.')
+}
 
 function db() {
   try {
@@ -29,7 +34,7 @@ export function onAuthChange(cb) {
 }
 
 export async function signIn(raw, password) {
-  await wait()
+  await net()
   const d = db()
   const username = normalizeUsername(raw)
   const u = Object.values(d.users).find((x) => x.username === username)
@@ -41,7 +46,7 @@ export async function signIn(raw, password) {
 }
 
 export async function signUp({ username: raw, password, firstName = '', lastName = '' }) {
-  await wait()
+  await net()
   const username = normalizeUsername(raw)
   const invalid = validateSignUp({ username, password, firstName, lastName })
   if (invalid) throw new Error(invalid)
@@ -70,11 +75,12 @@ export async function signOut() {
 }
 
 export async function getProfile(id) {
+  await net()
   return db().profiles[id]
 }
 
 export async function updateProfile(id, { first_name, last_name }) {
-  await wait()
+  await net()
   const d = db()
   Object.assign(d.profiles[id], { first_name: first_name.trim() || null, last_name: last_name.trim() || null })
   save(d)
@@ -82,6 +88,7 @@ export async function updateProfile(id, { first_name, last_name }) {
 }
 
 export async function uploadAvatar(id, file) {
+  await net()
   const { resizeImage } = await import('./shared.js')
   const blob = await resizeImage(file)
   const url = await new Promise((res) => {
@@ -96,7 +103,7 @@ export async function uploadAvatar(id, file) {
 }
 
 export async function changePassword(username, current, next) {
-  await wait()
+  await net()
   const d = db()
   const u = Object.values(d.users).find((x) => x.username === username)
   if (!u || u.password !== current) throw new Error('La contraseña actual no es correcta.')
@@ -107,7 +114,8 @@ export async function changePassword(username, current, next) {
 
 const byTime = (a, b) => a.seconds - b.seconds || a.errors - b.errors
 
-export async function saveResult(userId, level, { seconds, errors, hintsUsed }) {
+export async function saveResult(userId, level, { seconds, errors, hintsUsed, created_at }) {
+  await net()
   const d = db()
   const row = {
     id: d.results.length + 1,
@@ -116,7 +124,7 @@ export async function saveResult(userId, level, { seconds, errors, hintsUsed }) 
     seconds: Math.max(1, seconds),
     errors,
     hints_used: hintsUsed,
-    created_at: new Date().toISOString(),
+    created_at: created_at || new Date().toISOString(),
   }
   d.results.push(row)
   save(d)
@@ -125,6 +133,7 @@ export async function saveResult(userId, level, { seconds, errors, hintsUsed }) 
 }
 
 export async function myRanking(userId, level, limit = 10) {
+  await net()
   return db()
     .results.filter((r) => r.user_id === userId && r.level === level)
     .sort(byTime)
@@ -132,6 +141,7 @@ export async function myRanking(userId, level, limit = 10) {
 }
 
 export async function globalRanking(level, limit = 10) {
+  await net()
   const d = db()
   const best = {}
   for (const r of d.results.filter((x) => x.level === level).sort(byTime)) best[r.user_id] ??= r
@@ -142,6 +152,7 @@ export async function globalRanking(level, limit = 10) {
 }
 
 export async function myBests(userId) {
+  await net()
   const best = {}
   for (const r of db().results.filter((x) => x.user_id === userId).sort(byTime)) best[r.level] ??= r.seconds
   return best

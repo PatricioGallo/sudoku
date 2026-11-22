@@ -12,6 +12,9 @@ App de sudoku en React + Vite.
 - 3 pistas por partida
 - Ranking global (mejor tiempo de cada jugador) y ranking personal, por nivel
 - Se juega con mouse/touch o con teclado (números, flechas, Backspace)
+- Funciona sin conexión: la app queda instalada (service worker) y las partidas
+  terminadas offline se suben solas cuando vuelve internet
+- La partida en curso se guarda y se puede retomar
 
 ## Cómo se generan las partidas
 
