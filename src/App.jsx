@@ -4,6 +4,7 @@ import { generate, LEVELS } from './sudoku/generator.js'
 import { loadProgress, saveProgress } from './progress.js'
 import { formatTime } from './format.js'
 import { cachedProfile, cacheProfile, flushPending, isOffline, pendingResults } from './offline.js'
+import { useStats } from './levels.js'
 import Login from './components/Login.jsx'
 import Menu from './components/Menu.jsx'
 import Game from './components/Game.jsx'
@@ -21,6 +22,8 @@ export default function App() {
   const [pendingCount, setPendingCount] = useState(0)
   const [dataVersion, setDataVersion] = useState(0) // refresca rankings al sincronizar
   const [generating, setGenerating] = useState(null) // nivel que se está armando
+  const [statsVersion, setStatsVersion] = useState(0)
+  const stats = useStats(user?.id, dataVersion + statsVersion)
 
   // Sin conexión, la sesión puede no validarse: seguimos con el último perfil usado
   const offlineUser = () => {
@@ -154,13 +157,15 @@ export default function App() {
           profile={profile}
           onProgress={onProgress}
           onQueued={() => setPendingCount(pendingResults(userId).length)}
+          onFinished={() => setStatsVersion((v) => v + 1)}
+          stats={stats}
           onNewGame={() => begin(game.level)}
           onExit={goMenu}
         />
       ) : view === 'profile' ? (
-        <Profile profile={profile} onChange={updateProfile} onBack={() => setView(inProgress ? 'game' : 'menu')} />
+        <Profile profile={profile} stats={stats} onChange={updateProfile} onBack={() => setView(inProgress ? 'game' : 'menu')} />
       ) : (
-        <Menu key={dataVersion} profile={profile} current={inProgress} onResume={() => setView('game')} onStart={requestNew} />
+        <Menu key={dataVersion} profile={profile} stats={stats} current={inProgress} onResume={() => setView('game')} onStart={requestNew} />
       )}
 
       {generating && (
@@ -178,7 +183,8 @@ export default function App() {
             <h3>¿Empezar una partida nueva?</h3>
             <p>
               Tenés una partida de {LEVELS[inProgress.level].label} en curso ({formatTime(inProgress.seconds ?? 0)}). Si
-              empezás una de {LEVELS[pendingLevel].label}, la anterior se cierra y no cuenta para el ranking.
+              empezás {pendingLevel === inProgress.level ? 'otra' : 'una'} de {LEVELS[pendingLevel].label}, la
+              anterior se cierra y no cuenta para el ranking.
             </p>
             <div className="dialog-actions">
               <button className="btn btn-primary" onClick={() => begin(pendingLevel)}>

@@ -3,17 +3,17 @@ import * as api from '@api'
 import Avatar from './Avatar.jsx'
 import { cacheProfile } from '../offline.js'
 import { LEVELS } from '../sudoku/generator.js'
-import { LEVEL_ORDER, describeUnlock, isUnlocked, nextUnlock, rankOf, unlockProgress, useStats } from '../levels.js'
+import { LEVEL_ORDER, RANK_POINTS, formatPoints, isUnlocked, nextUnlock, rankOf, totalPoints } from '../levels.js'
 import { formatTime } from '../format.js'
 
-export default function Profile({ profile, onChange, onBack }) {
+export default function Profile({ profile, stats, onChange, onBack }) {
   const fileRef = useRef(null)
   const [names, setNames] = useState({ first_name: profile.first_name || '', last_name: profile.last_name || '' })
   const [pw, setPw] = useState({ current: '', next: '', repeat: '' })
   const [status, setStatus] = useState({}) // { photo|names|password: {ok|error, text} }
   const [busy, setBusy] = useState('')
-  const stats = useStats(profile.id)
   const rank = rankOf(stats)
+  const points = totalPoints(stats)
   const next = nextUnlock(stats)
 
   const run = async (key, fn, okText) => {
@@ -92,15 +92,26 @@ export default function Profile({ profile, onChange, onBack }) {
 
       <section className="panel">
         <h3>Tu camino</h3>
-        <p className="panel-note">
-          {next
-            ? `Para llegar a ${LEVELS[next.next].label}: ${describeUnlock(next.next).replace('Ganá', 'ganá')}. Llevás ${next.done} de ${next.need}.`
-            : 'Llegaste al rango más alto. Ahora, a bajar tus tiempos.'}
+        <p className="points-total">
+          <b>{formatPoints(points)}</b> puntos
         </p>
+        {next ? (
+          <>
+            <span className="unlock-bar big" aria-hidden="true">
+              <i style={{ width: `${Math.max(2, next.ratio * 100)}%` }} />
+            </span>
+            <p className="panel-note">
+              Te faltan {formatPoints(next.missing)} puntos para {LEVELS[next.next].label}. Sumás más con niveles
+              altos, jugando rápido y sin errores ni pistas.
+            </p>
+          </>
+        ) : (
+          <p className="panel-note">Llegaste al rango más alto. Ahora, a sumar puntos bajando tus tiempos.</p>
+        )}
         <ol className="ladder">
           {LEVEL_ORDER.map((key) => {
             const open = isUnlocked(key, stats)
-            const st = stats[key]
+            const st = stats.levels[key]
             return (
               <li key={key} className={`step step-${key} ${open ? 'is-open' : ''} ${key === rank ? 'is-rank' : ''}`}>
                 <span className="step-dot" aria-hidden="true">{open ? '' : '🔒'}</span>
@@ -108,9 +119,9 @@ export default function Profile({ profile, onChange, onBack }) {
                 <span className="step-info">
                   {open
                     ? st
-                      ? `${st.wins} ${st.wins === 1 ? 'ganada' : 'ganadas'}, mejor ${formatTime(st.best)}`
+                      ? `${st.wins} ${st.wins === 1 ? 'ganada' : 'ganadas'}, ${formatPoints(st.points)} pts, mejor ${formatTime(st.best)}`
                       : 'Sin partidas'
-                    : `${unlockProgress(key, stats).done}/${unlockProgress(key, stats).need} para desbloquear`}
+                    : `Desde ${formatPoints(RANK_POINTS[key])} pts`}
                 </span>
               </li>
             )

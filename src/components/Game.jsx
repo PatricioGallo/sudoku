@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { LEVELS } from '../sudoku/generator.js'
 import { submitResult } from '../offline.js'
+import { formatPoints, pointsFor, rankForPoints, totalPoints } from '../levels.js'
 import { formatTime } from '../format.js'
 import Ranking from './Ranking.jsx'
 
@@ -20,7 +21,7 @@ const PEERS = Array.from({ length: 81 }, (_, i) => {
   return [...set]
 })
 
-export default function Game({ game, profile, onProgress, onQueued, onNewGame, onExit }) {
+export default function Game({ game, profile, stats, onProgress, onQueued, onFinished, onNewGame, onExit }) {
   // `game` trae el tablero y, si se retoma, el progreso guardado
   const { puzzle, solution, level } = game
   const [values, setValues] = useState(() => (game.values ? game.values.slice() : puzzle.slice()))
@@ -36,6 +37,7 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
   const [won, setWon] = useState(false)
   const [saveState, setSaveState] = useState({ status: 'idle' }) // idle | saving | saved | error
   const saved = useRef(false)
+  const [score, setScore] = useState(null) // puntos ganados y si subió de rango
 
   const isGiven = (i) => puzzle[i] !== 0
   const isCorrect = (i) => values[i] === solution[i]
@@ -66,6 +68,11 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
     setSelected(null)
     if (!saved.current) {
       saved.current = true
+      const before = totalPoints(stats)
+      const earned = pointsFor({ level, seconds, errors, hints_used: MAX_HINTS - hintsLeft })
+      const from = rankForPoints(before)
+      const to = rankForPoints(before + earned.points)
+      setScore({ ...earned, rankUp: from !== to ? to : null })
       setSaveState({ status: 'saving' })
       submitResult(profile.id, level, { seconds, errors, hintsUsed: MAX_HINTS - hintsLeft })
         .then((r) => {
@@ -73,6 +80,7 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
             setSaveState({ status: 'queued' })
             onQueued?.()
           } else setSaveState({ status: 'saved', ...r })
+          onFinished?.()
         })
         .catch((e) => setSaveState({ status: 'error', message: e.message }))
     }
@@ -334,6 +342,20 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
                   : `. Quedaste #${saveState.position} en tu ranking.`
                 : '.'}
             </p>
+            {score && (
+              <div className="win-points">
+                <p className="win-points-total">+{formatPoints(score.points)} puntos</p>
+                <p className="win-points-detail">
+                  {score.base} base × {score.speed.toFixed(1).replace('.', ',')} por velocidad
+                  {score.accuracy < 1 ? ` × ${Math.round(score.accuracy * 100)}% por errores y pistas` : ''}
+                </p>
+              </div>
+            )}
+            {score?.rankUp && (
+              <p className={`rank-up rank-${score.rankUp}`}>
+                ¡Subiste a rango {LEVELS[score.rankUp].label}! Ya podés jugar ese nivel.
+              </p>
+            )}
             {saveState.status === 'saving' && <p className="win-detail">Guardando tu tiempo…</p>}
             {saveState.status === 'queued' && (
               <p className="win-offline">

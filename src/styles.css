@@ -1060,3 +1060,25 @@ button:focus-visible, input:focus-visible {
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
+
+/* ---------- Puntos ---------- */
+.points-total { margin: -4px 0 0; color: var(--text-dim); }
+.points-total b { font-size: 2.2rem; font-weight: 800; color: var(--text); font-stretch: 85%; margin-right: 4px; }
+.unlock-bar.big { height: 12px; }
+.win-points {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: -6px 0 14px;
+}
+.win-points-total { margin: 0; font-size: 1.6rem; font-weight: 800; color: var(--mint-deep); }
+.win-points-detail { margin: 0; font-size: 0.88rem; color: var(--ink-soft); }
+.rank-up {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+  color: var(--ink);
+  animation: dialog-in 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) 0.3s both;
+}
