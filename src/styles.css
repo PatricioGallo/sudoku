@@ -1113,3 +1113,18 @@ button:focus-visible, input:focus-visible {
 }
 .step.rk-leyenda.is-open .step-dot { box-shadow: inset 0 0 0 2px var(--saffron); }
 .step[class*='rk-'].is-rank .step-name::after { background: var(--c); color: var(--c-text, var(--ink)); }
+
+/* ---------- Zona del notch ---------- */
+/* En iOS, lo que pasa por debajo de la barra de estado se ve borroso.
+   Esta franja sólida del color del fondo lo tapa (los carteles quedan por encima). */
+.safe-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: env(safe-area-inset-top, 0px);
+  background: var(--night);
+  z-index: 15;
+  pointer-events: none;
+}
+html { background: var(--night); }
