@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { LEVELS } from '../sudoku/generator.js'
-import { saveResult, formatTime } from '../ranking.js'
+import * as api from '@api'
+import { formatTime } from '../format.js'
 import Ranking from './Ranking.jsx'
 
 const MAX_HINTS = 3
 
-export default function Game({ game, user, onNewGame, onExit }) {
+export default function Game({ game, profile, onNewGame, onExit }) {
   const { puzzle, solution, level } = game
   const [values, setValues] = useState(() => puzzle.slice())
   const [hinted, setHinted] = useState(() => new Set())
@@ -15,7 +16,7 @@ export default function Game({ game, user, onNewGame, onExit }) {
   const [seconds, setSeconds] = useState(0)
   const [paused, setPaused] = useState(false)
   const [won, setWon] = useState(false)
-  const [position, setPosition] = useState(null)
+  const [saveState, setSaveState] = useState({ status: 'idle' }) // idle | saving | saved | error
   const saved = useRef(false)
 
   const isGiven = (i) => puzzle[i] !== 0
@@ -42,7 +43,11 @@ export default function Game({ game, user, onNewGame, onExit }) {
     setSelected(null)
     if (!saved.current) {
       saved.current = true
-      setPosition(saveResult(user, level, { seconds, errors, hintsUsed: MAX_HINTS - hintsLeft }))
+      setSaveState({ status: 'saving' })
+      api
+        .saveResult(profile.id, level, { seconds, errors, hintsUsed: MAX_HINTS - hintsLeft })
+        .then((r) => setSaveState({ status: 'saved', ...r }))
+        .catch((e) => setSaveState({ status: 'error', message: e.message }))
     }
   }, [values]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -235,9 +240,19 @@ export default function Game({ game, user, onNewGame, onExit }) {
             <p className="win-detail">
               {errors} {errors === 1 ? 'error' : 'errores'} y {MAX_HINTS - hintsLeft}{' '}
               {MAX_HINTS - hintsLeft === 1 ? 'pista usada' : 'pistas usadas'}
-              {position === 1 ? '. ¡Nuevo récord!' : position > 0 ? `. Quedaste #${position} en tu ranking.` : '.'}
+              {saveState.status === 'saved'
+                ? saveState.position === 1
+                  ? '. ¡Nuevo récord personal!'
+                  : `. Quedaste #${saveState.position} en tu ranking.`
+                : '.'}
             </p>
-            <Ranking user={user} initialLevel={level} highlight={position} />
+            {saveState.status === 'saving' && <p className="win-detail">Guardando tu tiempo…</p>}
+            {saveState.status === 'error' && (
+              <p className="form-error">No se pudo guardar el tiempo: {saveState.message}</p>
+            )}
+            {saveState.status === 'saved' && (
+              <Ranking profile={profile} initialLevel={level} initialScope="mine" highlightId={saveState.id} />
+            )}
             <div className="win-actions">
               <button className="btn btn-primary" onClick={onNewGame}>
                 Jugar otra

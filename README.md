@@ -4,12 +4,13 @@ App de sudoku en React + Vite.
 
 ## Funciones
 
-- Login con usuario y contraseña
+- Registro y login con usuario y contraseña
+- Perfil con foto, nombre, apellido y cambio de contraseña
 - 4 niveles: Principiante, Fácil, Medio y Difícil
 - Cronómetro (con pausa, y pausa automática al cambiar de pestaña)
 - Contador de errores
 - 3 pistas por partida
-- Ranking de tiempos por usuario y nivel
+- Ranking global (mejor tiempo de cada jugador) y ranking personal, por nivel
 - Se juega con mouse/touch o con teclado (números, flechas, Backspace)
 
 ## Cómo se generan las partidas
@@ -38,17 +39,17 @@ npm test         # prueba del generador
 npm run build    # genera dist/
 ```
 
-## Usuarios
+## Cuentas y ranking global (Supabase)
 
-Los usuarios están en `src/auth.js`. Se guarda el hash SHA-256 de
-`usuario:contraseña`, nunca la contraseña en texto plano. Para agregar uno:
+Las cuentas, el ranking global y las fotos de perfil viven en [Supabase](https://supabase.com).
 
-```bash
-node -e "console.log(require('crypto').createHash('sha256').update('usuario:clave').digest('hex'))"
-```
+1. Crear un proyecto en Supabase.
+2. **SQL Editor → New query**: pegar `supabase/schema.sql` y correrlo.
+3. **Authentication → Sign In / Providers → Email**: desactivar *Confirm email*
+   (los jugadores entran con usuario, no con email).
+4. Copiar *Project URL* y la clave *anon / publishable* en `src/config.js`.
 
-> Es un login del lado del cliente: sirve para separar rankings, no es seguridad real.
-> El ranking se guarda en el navegador (localStorage), así que es por dispositivo.
+Para probar sin Supabase: `npm run dev:mock` (backend simulado en el navegador, con jugadores de ejemplo).
 
 ## Deploy
 
