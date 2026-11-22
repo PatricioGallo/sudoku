@@ -10,6 +10,7 @@ export default defineConfig(({ mode }) => ({
     // Service worker: guarda la app en el dispositivo para abrirla sin internet
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false, // se registra en main.jsx para buscar actualizaciones al volver a la app
       includeAssets: ['icon.svg', 'apple-touch-icon.png'],
       manifest: {
         name: 'Sudoku',
