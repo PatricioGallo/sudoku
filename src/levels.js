@@ -1,5 +1,7 @@
-// Rangos por puntaje: cada partida ganada suma puntos según el nivel, el tiempo,
-// los errores y las pistas. Los puntos para ascender se triplican en cada rango.
+// Niveles y rangos son cosas distintas:
+// - Niveles (dificultad): se desbloquean ganando partidas del nivel anterior.
+// - Rangos: se suben con puntos; cada partida ganada suma según el nivel,
+//   el tiempo, los errores y las pistas. Los puntos para cada rango se multiplican por 5.
 import { useEffect, useState } from 'react'
 import * as api from '@api'
 import { LEVELS } from './sudoku/generator.js'
@@ -7,6 +9,29 @@ import { cachedStats, cacheStats, pendingResults } from './offline.js'
 
 export const LEVEL_ORDER = Object.keys(LEVELS)
 
+// ---------- Niveles ----------
+// Partidas ganadas en el nivel anterior para abrir cada nivel
+export const UNLOCK_WINS = { facil: 2, medio: 5, dificil: 7, experto: 10, maestro: 12 }
+
+const prevOf = (level) => LEVEL_ORDER[LEVEL_ORDER.indexOf(level) - 1]
+
+/** Progreso para abrir `level`: ganadas en el anterior / necesarias. */
+export function unlockProgress(level, stats) {
+  const need = UNLOCK_WINS[level] ?? 0
+  const done = Math.min(stats.levels[prevOf(level)]?.wins ?? 0, need)
+  return { done, need, from: prevOf(level) }
+}
+
+/** El primero siempre está abierto; los demás, con las ganadas del anterior
+ *  (o si ya lo ganaste alguna vez, para no quitarle a nadie lo que jugó). */
+export function isUnlocked(level, stats) {
+  if (!UNLOCK_WINS[level]) return true
+  if ((stats.levels[level]?.wins ?? 0) > 0) return true
+  const { done, need } = unlockProgress(level, stats)
+  return done >= need
+}
+
+// ---------- Puntos ----------
 // Puntos base (se duplican por nivel) y tiempo objetivo en segundos
 export const SCORING = {
   principiante: { base: 10, par: 5 * 60 },
@@ -15,16 +40,6 @@ export const SCORING = {
   dificil: { base: 80, par: 18 * 60 },
   experto: { base: 160, par: 25 * 60 },
   maestro: { base: 320, par: 35 * 60 },
-}
-
-// Puntos totales necesarios para cada rango (se triplican)
-export const RANK_POINTS = {
-  principiante: 0,
-  facil: 50,
-  medio: 200,
-  dificil: 600,
-  experto: 1800,
-  maestro: 5400,
 }
 
 const clamp = (x, lo, hi) => Math.min(hi, Math.max(lo, x))
@@ -37,8 +52,43 @@ export function pointsFor({ level, seconds, errors = 0, hints_used = 0 }) {
   return { points: Math.round(base * speed * accuracy), base, speed, accuracy }
 }
 
+// ---------- Rangos ----------
+export const RANKS = [
+  { id: 'novato', label: 'Novato', points: 0 },
+  { id: 'aprendiz', label: 'Aprendiz', points: 100 },
+  { id: 'avanzado', label: 'Avanzado', points: 500 },
+  { id: 'maestro', label: 'Maestro', points: 2500 },
+  { id: 'gran-maestro', label: 'Gran maestro', points: 12500 },
+  { id: 'leyenda', label: 'Leyenda', points: 62500 },
+]
+
 export const totalPoints = (stats) => stats.points ?? 0
 
+/** Rango correspondiente a una cantidad de puntos. */
+export function rankForPoints(points) {
+  let rank = RANKS[0]
+  for (const r of RANKS) if (points >= r.points) rank = r
+  return rank
+}
+export const rankOf = (stats) => rankForPoints(totalPoints(stats))
+
+/** Próximo rango y progreso desde el actual, o null si ya es el más alto. */
+export function nextRank(stats) {
+  const have = totalPoints(stats)
+  const current = rankOf(stats)
+  const next = RANKS[RANKS.indexOf(current) + 1]
+  if (!next) return null
+  return {
+    next,
+    have,
+    missing: next.points - have,
+    ratio: (have - current.points) / (next.points - current.points),
+  }
+}
+
+export const formatPoints = (n) => Number(n).toLocaleString('es-AR')
+
+// ---------- Estadísticas ----------
 /** Agrupa las partidas por nivel (mejor tiempo, ganadas, puntos) y suma el total. */
 export function buildStats(results) {
   const stats = { levels: {}, points: 0 }
@@ -52,31 +102,6 @@ export function buildStats(results) {
   }
   return stats
 }
-
-export const isUnlocked = (level, stats) => totalPoints(stats) >= (RANK_POINTS[level] ?? 0)
-
-/** Rango: el nivel más alto alcanzado con los puntos. */
-export function rankOf(stats) {
-  return rankForPoints(totalPoints(stats))
-}
-export function rankForPoints(points) {
-  let rank = LEVEL_ORDER[0]
-  for (const l of LEVEL_ORDER) if (points >= RANK_POINTS[l]) rank = l
-  return rank
-}
-
-/** Próximo rango y progreso desde el rango actual, o null si ya es el más alto. */
-export function nextUnlock(stats) {
-  const have = totalPoints(stats)
-  const rank = rankOf(stats)
-  const next = LEVEL_ORDER[LEVEL_ORDER.indexOf(rank) + 1]
-  if (!next) return null
-  const from = RANK_POINTS[rank]
-  const need = RANK_POINTS[next]
-  return { next, have, need, missing: need - have, ratio: (have - from) / (need - from) }
-}
-
-export const formatPoints = (n) => n.toLocaleString('es-AR')
 
 /** Estadísticas del jugador: servidor (o caché sin conexión) + partidas pendientes de subir. */
 export function useStats(userId, version = 0) {

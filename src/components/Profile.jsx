@@ -3,7 +3,7 @@ import * as api from '@api'
 import Avatar from './Avatar.jsx'
 import { cacheProfile } from '../offline.js'
 import { LEVELS } from '../sudoku/generator.js'
-import { LEVEL_ORDER, RANK_POINTS, formatPoints, isUnlocked, nextUnlock, rankOf, totalPoints } from '../levels.js'
+import { LEVEL_ORDER, RANKS, formatPoints, isUnlocked, nextRank, rankOf, totalPoints, unlockProgress } from '../levels.js'
 import { formatTime } from '../format.js'
 
 export default function Profile({ profile, stats, onChange, onBack }) {
@@ -14,7 +14,7 @@ export default function Profile({ profile, stats, onChange, onBack }) {
   const [busy, setBusy] = useState('')
   const rank = rankOf(stats)
   const points = totalPoints(stats)
-  const next = nextUnlock(stats)
+  const next = nextRank(stats)
 
   const run = async (key, fn, okText) => {
     setBusy(key)
@@ -86,12 +86,12 @@ export default function Profile({ profile, stats, onChange, onBack }) {
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
         <h2>{[profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.username}</h2>
         <p className="handle">@{profile.username}</p>
-        <span className={`rank-badge rank-${rank}`}>Rango {LEVELS[rank].label}</span>
+        <span className={`rank-badge rk-${rank.id}`}>Rango {rank.label}</span>
         <Msg k="photo" />
       </section>
 
       <section className="panel">
-        <h3>Tu camino</h3>
+        <h3>Tu rango</h3>
         <p className="points-total">
           <b>{formatPoints(points)}</b> puntos
         </p>
@@ -101,27 +101,44 @@ export default function Profile({ profile, stats, onChange, onBack }) {
               <i style={{ width: `${Math.max(2, next.ratio * 100)}%` }} />
             </span>
             <p className="panel-note">
-              Te faltan {formatPoints(next.missing)} puntos para {LEVELS[next.next].label}. Sumás más con niveles
-              altos, jugando rápido y sin errores ni pistas.
+              Te faltan {formatPoints(next.missing)} puntos para {next.next.label}. Sumás más jugando niveles altos,
+              rápido y sin errores ni pistas.
             </p>
           </>
         ) : (
-          <p className="panel-note">Llegaste al rango más alto. Ahora, a sumar puntos bajando tus tiempos.</p>
+          <p className="panel-note">Sos Leyenda, el rango más alto. Ahora, a sumar puntos bajando tus tiempos.</p>
         )}
+        <ol className="ladder">
+          {RANKS.map((r) => {
+            const reached = points >= r.points
+            return (
+              <li key={r.id} className={`step rk-${r.id} ${reached ? 'is-open' : ''} ${r.id === rank.id ? 'is-rank' : ''}`}>
+                <span className="step-dot" aria-hidden="true">{reached ? '' : '🔒'}</span>
+                <span className="step-name">{r.label}</span>
+                <span className="step-info">{r.points ? `${formatPoints(r.points)} pts` : 'Inicio'}</span>
+              </li>
+            )
+          })}
+        </ol>
+      </section>
+
+      <section className="panel">
+        <h3>Tus niveles</h3>
         <ol className="ladder">
           {LEVEL_ORDER.map((key) => {
             const open = isUnlocked(key, stats)
             const st = stats.levels[key]
+            const prog = unlockProgress(key, stats)
             return (
-              <li key={key} className={`step step-${key} ${open ? 'is-open' : ''} ${key === rank ? 'is-rank' : ''}`}>
+              <li key={key} className={`step step-${key} ${open ? 'is-open' : ''}`}>
                 <span className="step-dot" aria-hidden="true">{open ? '' : '🔒'}</span>
                 <span className="step-name">{LEVELS[key].label}</span>
                 <span className="step-info">
                   {open
                     ? st
-                      ? `${st.wins} ${st.wins === 1 ? 'ganada' : 'ganadas'}, ${formatPoints(st.points)} pts, mejor ${formatTime(st.best)}`
+                      ? `${st.wins} ${st.wins === 1 ? 'ganada' : 'ganadas'}, mejor ${formatTime(st.best)}`
                       : 'Sin partidas'
-                    : `Desde ${formatPoints(RANK_POINTS[key])} pts`}
+                    : `${prog.done}/${prog.need} en ${LEVELS[prog.from].label}`}
                 </span>
               </li>
             )

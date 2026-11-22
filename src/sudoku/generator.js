@@ -2,14 +2,13 @@
 // El tablero es un array de 81 números (0 = celda vacía).
 
 export const LEVELS = {
-  // Las claves internas no cambian (están guardadas en la base); los nombres son los rangos.
-  principiante: { label: 'Novato', clues: 46 },
-  facil: { label: 'Principiante', clues: 40 },
-  medio: { label: 'Avanzado', clues: 33 },
-  dificil: { label: 'Maestro', clues: 27 },
-  experto: { label: 'Gran maestro', clues: 23 },
+  principiante: { label: 'Principiante', clues: 46 },
+  facil: { label: 'Fácil', clues: 40 },
+  medio: { label: 'Medio', clues: 33 },
+  dificil: { label: 'Difícil', clues: 27 },
+  experto: { label: 'Experto', clues: 23 },
   // El más alto: además de tener menos números, no se resuelve solo con lógica básica
-  maestro: { label: 'Experto', clues: 22, advanced: true },
+  maestro: { label: 'Maestro', clues: 22, advanced: true },
 }
 
 const PEERS = Array.from({ length: 81 }, (_, i) => {

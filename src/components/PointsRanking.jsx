@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import * as api from '@api'
-import { LEVELS } from '../sudoku/generator.js'
 import { displayName } from '../api/shared.js'
 import { formatPoints, rankForPoints } from '../levels.js'
 import { isNetworkError } from '../offline.js'
@@ -69,7 +68,7 @@ export default function PointsRanking({ profile, version = 0 }) {
                   <Avatar profile={r} size={34} />
                   <span className="who-text">
                     <span className="who-name">{displayName(r)}</span>
-                    <span className={`mini-rank rank-${rank}`}>{LEVELS[rank].label}</span>
+                    <span className={`mini-rank rk-${rank.id}`}>{rank.label}</span>
                   </span>
                 </span>
                 <span className="pts">

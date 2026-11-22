@@ -3,7 +3,7 @@ import { formatTime } from '../format.js'
 import Ranking from './Ranking.jsx'
 import PointsRanking from './PointsRanking.jsx'
 import { progressPercent } from '../progress.js'
-import { LEVEL_ORDER, RANK_POINTS, SCORING, formatPoints, isUnlocked, rankOf, totalPoints } from '../levels.js'
+import { LEVEL_ORDER, SCORING, formatPoints, isUnlocked, rankOf, totalPoints, unlockProgress } from '../levels.js'
 
 export default function Menu({ profile, stats, current, onResume, onStart }) {
   const rank = rankOf(stats)
@@ -14,8 +14,8 @@ export default function Menu({ profile, stats, current, onResume, onStart }) {
       <h2 className="greeting">
         Hola, {profile.first_name || profile.username}. ¿Qué nivel jugás hoy?
       </h2>
-      <span className={`rank-badge rank-${rank} rank-inline`}>
-        Rango {LEVELS[rank].label}, {formatPoints(points)} pts
+      <span className={`rank-badge rk-${rank.id} rank-inline`}>
+        Rango {rank.label}, {formatPoints(points)} pts
       </span>
 
       {current && (
@@ -38,7 +38,7 @@ export default function Menu({ profile, stats, current, onResume, onStart }) {
         {LEVEL_ORDER.map((key, idx) => {
           const { label, clues, advanced } = LEVELS[key]
           const open = isUnlocked(key, stats)
-          const need = RANK_POINTS[key]
+          const prog = unlockProgress(key, stats)
           const best = stats.levels[key]?.best
           return (
             <button
@@ -62,11 +62,13 @@ export default function Menu({ profile, stats, current, onResume, onStart }) {
                 <span className="level-best">{best ? `Mejor: ${formatTime(best)}` : 'Sin récord'}</span>
               ) : (
                 <span className="level-unlock">
-                  <span>Se desbloquea con {formatPoints(need)} puntos</span>
-                  <span className="unlock-bar" aria-label={`${points} de ${need} puntos`}>
-                    <i style={{ width: `${Math.min(100, (points / need) * 100)}%` }} />
+                  <span>
+                    Ganá {prog.need} en {LEVELS[prog.from].label} para desbloquear
+                  </span>
+                  <span className="unlock-bar" aria-label={`${prog.done} de ${prog.need}`}>
+                    <i style={{ width: `${(prog.done / prog.need) * 100}%` }} />
                     <b>
-                      {formatPoints(points)}/{formatPoints(need)}
+                      {prog.done}/{prog.need}
                     </b>
                   </span>
                 </span>

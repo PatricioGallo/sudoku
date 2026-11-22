@@ -72,7 +72,7 @@ export default function Game({ game, profile, stats, onProgress, onQueued, onFin
       const earned = pointsFor({ level, seconds, errors, hints_used: MAX_HINTS - hintsLeft })
       const from = rankForPoints(before)
       const to = rankForPoints(before + earned.points)
-      setScore({ ...earned, rankUp: from !== to ? to : null })
+      setScore({ ...earned, rankUp: from.id !== to.id ? to : null })
       setSaveState({ status: 'saving' })
       submitResult(profile.id, level, { seconds, errors, hintsUsed: MAX_HINTS - hintsLeft })
         .then((r) => {
@@ -352,9 +352,7 @@ export default function Game({ game, profile, stats, onProgress, onQueued, onFin
               </div>
             )}
             {score?.rankUp && (
-              <p className={`rank-up rank-${score.rankUp}`}>
-                ¡Subiste a rango {LEVELS[score.rankUp].label}! Ya podés jugar ese nivel.
-              </p>
+              <p className={`rank-up rk-${score.rankUp.id}`}>¡Subiste a rango {score.rankUp.label}!</p>
             )}
             {saveState.status === 'saving' && <p className="win-detail">Guardando tu tiempo…</p>}
             {saveState.status === 'queued' && (

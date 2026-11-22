@@ -6,8 +6,10 @@ App de sudoku en React + Vite.
 
 - Registro y login con usuario y contraseña
 - Perfil con foto, nombre, apellido y cambio de contraseña
-- 6 rangos/niveles: Novato, Principiante, Avanzado, Maestro, Gran maestro y Experto.
-  Cada partida ganada suma puntos; los puntos desbloquean rangos (ver `src/levels.js`)
+- 6 niveles (Principiante, Fácil, Medio, Difícil, Experto, Maestro) que se desbloquean
+  ganando partidas del nivel anterior
+- 6 rangos por puntos (Novato, Aprendiz, Avanzado, Maestro, Gran maestro, Leyenda):
+  cada partida ganada suma puntos según nivel, tiempo, errores y pistas (ver `src/levels.js`)
 - 3 pistas por partida
 - Anotaciones de candidatos en cada casilla (se borran solas al colocar un número)
 - Ranking de jugadores por puntos totales, con su rango
@@ -25,14 +27,27 @@ si hay más de una, lo vuelve a poner. Así **toda partida tiene una única solu
 
 El nivel se define por la cantidad de números iniciales:
 
-| Rango        | Números iniciales        | Puntos base | Tiempo objetivo | Puntos para el rango |
-|--------------|--------------------------|-------------|-----------------|----------------------|
-| Novato       | 46                       | 10          | 5 min           | 0                    |
-| Principiante | 40                       | 20          | 8 min           | 50                   |
-| Avanzado     | 33                       | 40          | 12 min          | 200                  |
-| Maestro      | 27                       | 80          | 18 min          | 600                  |
-| Gran maestro | 23                       | 160         | 25 min          | 1.800                |
-| Experto      | 22 + técnicas avanzadas  | 320         | 35 min          | 5.400                |
+### Niveles
+
+| Nivel        | Números iniciales        | Para desbloquear              | Puntos base | Tiempo objetivo |
+|--------------|--------------------------|-------------------------------|-------------|-----------------|
+| Principiante | 46                       | —                             | 10          | 5 min           |
+| Fácil        | 40                       | 2 ganadas en Principiante     | 20          | 8 min           |
+| Medio        | 33                       | 5 ganadas en Fácil            | 40          | 12 min          |
+| Difícil      | 27                       | 7 ganadas en Medio            | 80          | 18 min          |
+| Experto      | 23                       | 10 ganadas en Difícil         | 160         | 25 min          |
+| Maestro      | 22 + técnicas avanzadas  | 12 ganadas en Experto         | 320         | 35 min          |
+
+### Rangos
+
+| Rango        | Puntos  |
+|--------------|---------|
+| Novato       | 0       |
+| Aprendiz     | 100     |
+| Avanzado     | 500     |
+| Maestro      | 2.500   |
+| Gran maestro | 12.500  |
+| Leyenda      | 62.500  |
 
 Puntos por partida = base × velocidad × precisión
 - velocidad = tiempo objetivo / tu tiempo, entre ×0,5 y ×2

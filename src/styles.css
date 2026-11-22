@@ -1096,3 +1096,20 @@ button:focus-visible, input:focus-visible {
 }
 .pts { font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pts small { font-size: 0.75rem; font-weight: 600; color: var(--text-dim); }
+
+/* ---------- Colores de rango (independientes de los niveles) ---------- */
+.rk-novato { --c: var(--mint); }
+.rk-aprendiz { --c: var(--sky); }
+.rk-avanzado { --c: var(--saffron); }
+.rk-maestro { --c: var(--coral); }
+.rk-gran-maestro { --c: #b98cff; }
+.rk-leyenda { --c: #0b1030; --c-text: var(--saffron); --c-ring: var(--saffron); }
+.rank-badge[class*='rk-'],
+.mini-rank[class*='rk-'],
+.rank-up[class*='rk-'] {
+  background: var(--c);
+  color: var(--c-text, var(--ink));
+  box-shadow: inset 0 0 0 2px var(--c-ring, transparent);
+}
+.step.rk-leyenda.is-open .step-dot { box-shadow: inset 0 0 0 2px var(--saffron); }
+.step[class*='rk-'].is-rank .step-name::after { background: var(--c); color: var(--c-text, var(--ink)); }
