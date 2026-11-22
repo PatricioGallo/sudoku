@@ -10,6 +10,7 @@ App de sudoku en React + Vite.
   Cada partida ganada suma puntos; los puntos desbloquean rangos (ver `src/levels.js`)
 - 3 pistas por partida
 - Anotaciones de candidatos en cada casilla (se borran solas al colocar un número)
+- Ranking de jugadores por puntos totales, con su rango
 - Ranking global (mejor tiempo de cada jugador) y ranking personal, por nivel
 - Se juega con mouse/touch o con teclado (números, flechas, Backspace)
 - Funciona sin conexión: la app queda instalada (service worker) y las partidas

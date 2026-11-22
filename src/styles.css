@@ -1082,3 +1082,17 @@ button:focus-visible, input:focus-visible {
   color: var(--ink);
   animation: dialog-in 0.4s cubic-bezier(0.2, 1.4, 0.4, 1) 0.3s both;
 }
+
+/* ---------- Ranking por puntos ---------- */
+.ranking-sub { color: var(--text-dim); font-size: 0.9rem; }
+.mini-rank {
+  align-self: flex-start;
+  margin-top: 3px;
+  padding: 1px 7px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--ink);
+}
+.pts { font-size: 1.2rem; font-weight: 800; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pts small { font-size: 0.75rem; font-weight: 600; color: var(--text-dim); }

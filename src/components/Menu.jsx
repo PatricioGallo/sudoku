@@ -1,6 +1,7 @@
 import { LEVELS } from '../sudoku/generator.js'
 import { formatTime } from '../format.js'
 import Ranking from './Ranking.jsx'
+import PointsRanking from './PointsRanking.jsx'
 import { progressPercent } from '../progress.js'
 import { LEVEL_ORDER, RANK_POINTS, SCORING, formatPoints, isUnlocked, rankOf, totalPoints } from '../levels.js'
 
@@ -74,6 +75,8 @@ export default function Menu({ profile, stats, current, onResume, onStart }) {
           )
         })}
       </div>
+
+      <PointsRanking profile={profile} />
 
       <Ranking profile={profile} />
     </main>

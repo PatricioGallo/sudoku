@@ -133,3 +133,41 @@ revoke execute on function public.handle_new_user() from public, anon, authentic
 alter table public.results drop constraint if exists results_level_check;
 alter table public.results add constraint results_level_check
   check (level in ('principiante', 'facil', 'medio', 'dificil', 'experto', 'maestro'));
+
+-- Ranking por puntos (misma fórmula que src/levels.js: base × velocidad × precisión)
+create or replace function public.points_ranking(lim integer default 20)
+returns table (
+  user_id uuid,
+  username text,
+  first_name text,
+  last_name text,
+  avatar_url text,
+  points bigint,
+  wins bigint
+)
+language sql
+stable
+set search_path = public
+as $$
+  with scoring (level, base, par) as (
+    values ('principiante', 10, 300), ('facil', 20, 480), ('medio', 40, 720),
+           ('dificil', 80, 1080), ('experto', 160, 1500), ('maestro', 320, 2100)
+  ),
+  per_game as (
+    select r.user_id,
+           round(
+             s.base
+             * least(2, greatest(0.5, s.par::numeric / greatest(1, r.seconds)))
+             * least(1, greatest(0.2, 1 - 0.1 * r.errors - 0.2 * r.hints_used))
+           ) as pts
+    from public.results r
+    join scoring s on s.level = r.level
+  )
+  select p.id, p.username, p.first_name, p.last_name, p.avatar_url,
+         sum(g.pts)::bigint as points, count(*)::bigint as wins
+  from per_game g
+  join public.profiles p on p.id = g.user_id
+  group by p.id
+  order by points desc, wins desc, p.username
+  limit lim;
+$$;

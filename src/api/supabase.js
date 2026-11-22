@@ -136,6 +136,11 @@ export async function myRanking(userId, level, limit = 10) {
   )
 }
 
+// Ranking de jugadores por puntos totales (calculado en la base)
+export async function pointsRanking(limit = 20) {
+  return check(await sb.rpc('points_ranking', { lim: limit }))
+}
+
 export async function globalRanking(level, limit = 10) {
   return check(await sb.rpc('global_ranking', { lvl: level, lim: limit }))
 }

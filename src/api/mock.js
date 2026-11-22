@@ -1,6 +1,7 @@
 // Backend simulado para probar la app sin Supabase: `npm run dev:mock`.
 // Guarda todo en localStorage de este navegador.
 import { normalizeUsername, validateSignUp, readLocalResults, markLocalMigrated } from './shared.js'
+import { pointsFor } from '../levels.js'
 
 export const configured = true
 const KEY = 'sudoku.mockdb'
@@ -149,6 +150,20 @@ export async function globalRanking(level, limit = 10) {
     .sort(byTime)
     .slice(0, limit)
     .map((r) => ({ ...d.profiles[r.user_id], ...r }))
+}
+
+export async function pointsRanking(limit = 20) {
+  await net()
+  const d = db()
+  const by = {}
+  for (const r of d.results) {
+    const u = (by[r.user_id] ??= { ...d.profiles[r.user_id], user_id: r.user_id, points: 0, wins: 0 })
+    u.points += pointsFor(r).points
+    u.wins++
+  }
+  return Object.values(by)
+    .sort((a, b) => b.points - a.points || b.wins - a.wins)
+    .slice(0, limit)
 }
 
 export async function myResults(userId) {
