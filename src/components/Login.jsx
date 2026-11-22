@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { login } from '../auth.js'
+import Logo from './Logo.jsx'
 
 export default function Login({ onLogin }) {
   const [username, setUsername] = useState('')
@@ -14,25 +15,31 @@ export default function Login({ onLogin }) {
     const user = await login(username, password)
     setLoading(false)
     if (user) onLogin(user)
-    else setError('Usuario o contraseña incorrectos')
+    else setError('Usuario o contraseña incorrectos. Revisá mayúsculas y probá de nuevo.')
   }
 
   return (
-    <div className="login">
-      <form className="card" onSubmit={submit}>
-        <h1>Sudoku</h1>
-        <label>
-          Usuario
+    <div className="screen login">
+      <div className="login-hero">
+        <Logo />
+        <p className="tagline">Un número por casilla. Una sola solución.</p>
+      </div>
+
+      <form className="login-form" onSubmit={submit}>
+        <label className="field">
+          <span>Usuario</span>
           <input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             autoComplete="username"
             autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck="false"
             required
           />
         </label>
-        <label>
-          Contraseña
+        <label className="field">
+          <span>Contraseña</span>
           <input
             type="password"
             value={password}
@@ -41,9 +48,13 @@ export default function Login({ onLogin }) {
             required
           />
         </label>
-        {error && <p className="error">{error}</p>}
-        <button className="primary" disabled={loading}>
-          {loading ? 'Entrando…' : 'Entrar'}
+        {error && (
+          <p className="form-error" role="alert">
+            {error}
+          </p>
+        )}
+        <button className="btn btn-primary" disabled={loading}>
+          {loading ? 'Entrando…' : 'Entrar a jugar'}
         </button>
       </form>
     </div>

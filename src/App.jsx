@@ -4,6 +4,7 @@ import { generate } from './sudoku/generator.js'
 import Login from './components/Login.jsx'
 import Menu from './components/Menu.jsx'
 import Game from './components/Game.jsx'
+import Logo from './components/Logo.jsx'
 
 export default function App() {
   const [user, setUser] = useState(currentUser)
@@ -18,13 +19,18 @@ export default function App() {
   if (!user) return <Login onLogin={setUser} />
 
   return (
-    <div className="app">
+    <div className="screen app">
       <header className="topbar">
-        <h1 onClick={() => setGame(null)}>Sudoku</h1>
+        <button className="brand" onClick={() => setGame(null)} aria-label="Ir al inicio">
+          <Logo size="small" />
+          <span className="wordmark">Sudoku</span>
+        </button>
         <div className="user">
-          <span>{user}</span>
+          <span className="avatar" aria-hidden="true">
+            {user[0].toUpperCase()}
+          </span>
           <button
-            className="link"
+            className="btn-text"
             onClick={() => {
               logout()
               setUser(null)

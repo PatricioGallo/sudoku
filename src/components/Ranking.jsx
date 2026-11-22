@@ -7,40 +7,42 @@ export default function Ranking({ user, initialLevel = 'principiante', highlight
   const rows = getRanking(user, level)
 
   return (
-    <section className="card ranking">
-      <h2>Ranking de {user}</h2>
-      <div className="tabs">
+    <section className="ranking">
+      <h3>Tus mejores tiempos</h3>
+      <div className="tabs" role="tablist">
         {Object.entries(LEVELS).map(([key, { label }]) => (
-          <button key={key} className={key === level ? 'tab active' : 'tab'} onClick={() => setLevel(key)}>
+          <button
+            key={key}
+            role="tab"
+            aria-selected={key === level}
+            className={`tab tab-${key}`}
+            onClick={() => setLevel(key)}
+          >
             {label}
           </button>
         ))}
       </div>
       {rows.length === 0 ? (
-        <p className="muted">Todavía no hay partidas terminadas en este nivel.</p>
+        <p className="empty">Terminá una partida en {LEVELS[level].label.toLowerCase()} para estrenar el ranking.</p>
       ) : (
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Tiempo</th>
-              <th>Errores</th>
-              <th>Pistas</th>
-              <th>Fecha</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r, i) => (
-              <tr key={r.date} className={level === initialLevel && highlight === i + 1 ? 'highlight' : ''}>
-                <td>{i + 1}</td>
-                <td>{formatTime(r.seconds)}</td>
-                <td>{r.errors}</td>
-                <td>{r.hintsUsed}</td>
-                <td>{new Date(r.date).toLocaleDateString('es-AR')}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <ol className="podium">
+          {rows.map((r, i) => (
+            <li
+              key={r.date}
+              className={level === initialLevel && highlight === i + 1 ? 'row is-new' : 'row'}
+            >
+              <span className={`pos pos-${i + 1}`}>{i + 1}</span>
+              <span className="time">{formatTime(r.seconds)}</span>
+              <span className="detail">
+                {r.errors} {r.errors === 1 ? 'error' : 'errores'}, {r.hintsUsed}{' '}
+                {r.hintsUsed === 1 ? 'pista' : 'pistas'}
+              </span>
+              <span className="date">
+                {new Date(r.date).toLocaleDateString('es-AR', { day: 'numeric', month: 'short' })}
+              </span>
+            </li>
+          ))}
+        </ol>
       )}
     </section>
   )

@@ -116,41 +116,73 @@ export default function Game({ game, user, onNewGame, onExit }) {
     )
   }
 
+  const cellClass = (i) => {
+    const v = values[i]
+    const classes = ['cell']
+    if (isGiven(i)) classes.push('given')
+    else if (v && v !== solution[i]) classes.push('wrong')
+    else if (hinted.has(i)) classes.push('hinted')
+    else if (v) classes.push('filled')
+    if (i === sel) classes.push('selected')
+    else if (v && v === selValue) classes.push('same')
+    else if (related(i)) classes.push('related')
+    return classes.join(' ')
+  }
+
   return (
-    <main className="game">
-      <div className="stats">
-        <span className="badge">{LEVELS[level].label}</span>
-        <span>⏱ {formatTime(seconds)}</span>
-        <span className={errors ? 'errors' : ''}>Errores: {errors}</span>
-        <button className="link" onClick={() => setPaused((p) => !p)} disabled={won}>
-          {paused ? 'Seguir' : 'Pausa'}
+    <main className={`game game-${level}`}>
+      <div className="hud">
+        <span className={`level-pill level-pill-${level}`}>{LEVELS[level].label}</span>
+        <span className="clock" aria-label="Tiempo">
+          {formatTime(seconds)}
+        </span>
+        <button
+          className="btn-icon"
+          onClick={() => setPaused((p) => !p)}
+          disabled={won}
+          aria-label={paused ? 'Seguir' : 'Pausar'}
+        >
+          {paused ? '▶' : '❚❚'}
         </button>
       </div>
 
+      <div className="counters">
+        <span className={errors ? 'counter counter-errors has' : 'counter counter-errors'}>
+          <b>{errors}</b> {errors === 1 ? 'error' : 'errores'}
+        </span>
+        <span className="counter counter-hints" aria-label={`${hintsLeft} pistas disponibles`}>
+          {Array.from({ length: MAX_HINTS }, (_, n) => (
+            <i key={n} className={n < hintsLeft ? 'bulb on' : 'bulb'} />
+          ))}
+          <span>pistas</span>
+        </span>
+      </div>
+
       <div className="board-wrap">
-        <div className={`board ${paused ? 'blurred' : ''}`}>
-          {values.map((v, i) => {
-            const r = Math.floor(i / 9), c = i % 9
-            const classes = ['cell']
-            if (isGiven(i)) classes.push('given')
-            else if (v && v !== solution[i]) classes.push('wrong')
-            else if (hinted.has(i)) classes.push('hinted')
-            else if (v) classes.push('filled')
-            if (i === sel) classes.push('selected')
-            else if (v && v === selValue) classes.push('same')
-            else if (related(i)) classes.push('related')
-            if (c === 2 || c === 5) classes.push('br')
-            if (r === 2 || r === 5) classes.push('bb')
-            return (
-              <button key={i} className={classes.join(' ')} onClick={() => setSelected(i)}>
-                {v || ''}
-              </button>
-            )
-          })}
+        <div className={`board ${paused ? 'is-paused' : ''} ${won ? 'is-won' : ''}`}>
+          {Array.from({ length: 9 }, (_, b) => (
+            <div className="box" key={b}>
+              {Array.from({ length: 9 }, (_, k) => {
+                const i = (Math.floor(b / 3) * 3 + Math.floor(k / 3)) * 9 + (b % 3) * 3 + (k % 3)
+                const v = values[i]
+                return (
+                  <button
+                    key={i}
+                    className={cellClass(i)}
+                    onClick={() => setSelected(i)}
+                    aria-label={`Fila ${Math.floor(i / 9) + 1}, columna ${(i % 9) + 1}${v ? `: ${v}` : ''}`}
+                  >
+                    {v ? <span key={`${i}-${v}`}>{v}</span> : null}
+                  </button>
+                )
+              })}
+            </div>
+          ))}
         </div>
         {paused && (
-          <button className="overlay" onClick={() => setPaused(false)}>
-            En pausa — tocá para seguir
+          <button className="pause-veil" onClick={() => setPaused(false)}>
+            <span className="pause-title">En pausa</span>
+            <span>Tocá para seguir</span>
           </button>
         )}
       </div>
@@ -158,34 +190,61 @@ export default function Game({ game, user, onNewGame, onExit }) {
       <div className="numpad">
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
           <button key={d} onClick={() => place(d)} disabled={placedCount[d] >= 9}>
-            {d}
+            <span className="num">{d}</span>
+            <span className="left">{9 - placedCount[d] || ''}</span>
           </button>
         ))}
       </div>
 
-      <div className="actions">
-        <button onClick={() => place(0)}>Borrar</button>
-        <button onClick={giveHint} disabled={hintsLeft === 0 || won}>
-          Pista ({hintsLeft})
+      <div className="toolbar">
+        <button className="tool" onClick={() => place(0)}>
+          <span className="tool-icon" aria-hidden="true">⌫</span>
+          Borrar
         </button>
-        <button onClick={onExit}>Menú</button>
+        <button className="tool tool-hint" onClick={giveHint} disabled={hintsLeft === 0 || won}>
+          <span className="tool-icon" aria-hidden="true">✦</span>
+          Pista
+          <span className="tool-badge">{hintsLeft}</span>
+        </button>
+        <button className="tool" onClick={onExit}>
+          <span className="tool-icon" aria-hidden="true">☰</span>
+          Menú
+        </button>
       </div>
 
       {won && (
-        <div className="modal">
-          <div className="card">
-            <h2>¡Resuelto! 🎉</h2>
-            <p>
-              {LEVELS[level].label} en <strong>{formatTime(seconds)}</strong> · {errors} errores ·{' '}
-              {MAX_HINTS - hintsLeft} pistas
+        <div className="win">
+          <div className="confetti" aria-hidden="true">
+            {Array.from({ length: 36 }, (_, n) => (
+              <span
+                key={n}
+                style={{
+                  '--x': `${(n * 37) % 100}%`,
+                  '--d': `${(n % 9) * 0.12}s`,
+                  '--r': `${((n * 53) % 60) - 30}deg`,
+                  '--c': ['#FFC233', '#2BD9A0', '#FF5A6E', '#8FA8FF'][n % 4],
+                }}
+              >
+                {(n % 9) + 1}
+              </span>
+            ))}
+          </div>
+          <div className="win-sheet">
+            <p className="win-kicker">{LEVELS[level].label} resuelto</p>
+            <p className="win-time">{formatTime(seconds)}</p>
+            <p className="win-detail">
+              {errors} {errors === 1 ? 'error' : 'errores'} y {MAX_HINTS - hintsLeft}{' '}
+              {MAX_HINTS - hintsLeft === 1 ? 'pista usada' : 'pistas usadas'}
+              {position === 1 ? '. ¡Nuevo récord!' : position > 0 ? `. Quedaste #${position} en tu ranking.` : '.'}
             </p>
-            {position > 0 && <p className="muted">Puesto #{position} en tu ranking de este nivel</p>}
             <Ranking user={user} initialLevel={level} highlight={position} />
-            <div className="actions">
-              <button className="primary" onClick={onNewGame}>
-                Otra partida
+            <div className="win-actions">
+              <button className="btn btn-primary" onClick={onNewGame}>
+                Jugar otra
               </button>
-              <button onClick={onExit}>Menú</button>
+              <button className="btn btn-ghost" onClick={onExit}>
+                Volver al menú
+              </button>
             </div>
           </div>
         </div>
