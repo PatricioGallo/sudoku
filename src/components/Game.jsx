@@ -6,14 +6,15 @@ import Ranking from './Ranking.jsx'
 
 const MAX_HINTS = 3
 
-export default function Game({ game, profile, onNewGame, onExit }) {
+export default function Game({ game, profile, onProgress, onNewGame, onExit }) {
+  // `game` trae el tablero y, si se retoma, el progreso guardado
   const { puzzle, solution, level } = game
-  const [values, setValues] = useState(() => puzzle.slice())
-  const [hinted, setHinted] = useState(() => new Set())
+  const [values, setValues] = useState(() => (game.values ? game.values.slice() : puzzle.slice()))
+  const [hinted, setHinted] = useState(() => new Set(game.hinted || []))
   const [selected, setSelected] = useState(null)
-  const [errors, setErrors] = useState(0)
-  const [hintsLeft, setHintsLeft] = useState(MAX_HINTS)
-  const [seconds, setSeconds] = useState(0)
+  const [errors, setErrors] = useState(game.errors ?? 0)
+  const [hintsLeft, setHintsLeft] = useState(game.hintsLeft ?? MAX_HINTS)
+  const [seconds, setSeconds] = useState(game.seconds ?? 0)
   const [paused, setPaused] = useState(false)
   const [won, setWon] = useState(false)
   const [saveState, setSaveState] = useState({ status: 'idle' }) // idle | saving | saved | error
@@ -35,6 +36,11 @@ export default function Game({ game, profile, onNewGame, onExit }) {
     document.addEventListener('visibilitychange', onHide)
     return () => document.removeEventListener('visibilitychange', onHide)
   }, [])
+
+  // Guardar el progreso para poder retomar la partida
+  useEffect(() => {
+    onProgress?.({ ...game, values, hinted: [...hinted], errors, hintsLeft, seconds, won })
+  }, [values, hinted, errors, hintsLeft, seconds, won]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Detectar partida ganada y guardar en el ranking
   useEffect(() => {

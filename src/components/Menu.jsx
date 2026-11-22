@@ -3,8 +3,9 @@ import * as api from '@api'
 import { LEVELS } from '../sudoku/generator.js'
 import { formatTime } from '../format.js'
 import Ranking from './Ranking.jsx'
+import { progressPercent } from '../progress.js'
 
-export default function Menu({ profile, onStart }) {
+export default function Menu({ profile, current, onResume, onStart }) {
   const [bests, setBests] = useState({})
 
   useEffect(() => {
@@ -16,6 +17,25 @@ export default function Menu({ profile, onStart }) {
       <h2 className="greeting">
         Hola, {profile.first_name || profile.username}. ¿Qué nivel jugás hoy?
       </h2>
+
+      {current && (
+        <button className={`resume resume-${current.level}`} onClick={onResume}>
+          <span className="resume-text">
+            <span className="resume-title">Seguir jugando</span>
+            <span className="resume-meta">
+              {LEVELS[current.level].label}, {formatTime(current.seconds ?? 0)} jugados
+            </span>
+          </span>
+          <span className="resume-progress" style={{ '--p': `${progressPercent(current)}%` }}>
+            <b>{progressPercent(current)}%</b>
+          </span>
+          <span className="resume-bar" aria-hidden="true">
+            <i style={{ width: `${progressPercent(current)}%` }} />
+          </span>
+        </button>
+      )}
+
+      {current && <h3 className="section-label">O empezá una nueva</h3>}
 
       <div className="levels">
         {Object.entries(LEVELS).map(([key, { label, clues }], idx) => (

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import * as api from '@api'
-import { generate } from './sudoku/generator.js'
+import { generate, LEVELS } from './sudoku/generator.js'
+import { loadProgress, saveProgress } from './progress.js'
+import { formatTime } from './format.js'
 import Login from './components/Login.jsx'
 import Menu from './components/Menu.jsx'
 import Game from './components/Game.jsx'
@@ -12,8 +14,8 @@ export default function App() {
   const [user, setUser] = useState(undefined) // undefined = cargando
   const [profile, setProfile] = useState(null)
   const [view, setView] = useState('menu') // menu | game | profile
-  const [game, setGame] = useState(null)
-  const [gameId, setGameId] = useState(0)
+  const [game, setGame] = useState(null) // partida actual con su progreso
+  const [pendingLevel, setPendingLevel] = useState(null) // pedir confirmación
 
   useEffect(() => {
     if (!api.configured) return
@@ -29,16 +31,36 @@ export default function App() {
       setGame(null)
       return
     }
+    setGame(loadProgress(userId))
     api.getProfile(userId).then((p) => {
       setProfile(p)
       if (p) api.migrateLocal(p.id, p.username)
     })
   }, [userId])
 
-  const start = (level) => {
-    setGame(generate(level))
-    setGameId((n) => n + 1)
+  const inProgress = game && !game.won ? game : null
+
+  const begin = (level) => {
+    const g = { ...generate(level), id: Date.now() }
+    setGame(g)
+    saveProgress(userId, g)
+    setPendingLevel(null)
     setView('game')
+  }
+
+  const requestNew = (level) => {
+    if (inProgress) setPendingLevel(level)
+    else begin(level)
+  }
+
+  const onProgress = (g) => {
+    setGame(g)
+    saveProgress(userId, g)
+  }
+
+  const goMenu = () => {
+    if (game?.won) setGame(null)
+    setView('menu')
   }
 
   if (!api.configured) return <SetupNeeded />
@@ -48,7 +70,7 @@ export default function App() {
   return (
     <div className="screen app">
       <header className="topbar">
-        <button className="brand" onClick={() => setView('menu')} aria-label="Ir al inicio">
+        <button className="brand" onClick={goMenu} aria-label="Ir al inicio">
           <Logo size="small" />
           <span className="wordmark">Sudoku</span>
         </button>
@@ -63,16 +85,46 @@ export default function App() {
 
       {view === 'game' && game ? (
         <Game
-          key={gameId}
+          key={game.id}
           game={game}
           profile={profile}
-          onNewGame={() => start(game.level)}
-          onExit={() => setView('menu')}
+          onProgress={onProgress}
+          onNewGame={() => begin(game.level)}
+          onExit={goMenu}
         />
       ) : view === 'profile' ? (
-        <Profile profile={profile} onChange={setProfile} onBack={() => setView(game ? 'game' : 'menu')} />
+        <Profile profile={profile} onChange={setProfile} onBack={() => setView(inProgress ? 'game' : 'menu')} />
       ) : (
-        <Menu profile={profile} onStart={start} />
+        <Menu profile={profile} current={inProgress} onResume={() => setView('game')} onStart={requestNew} />
+      )}
+
+      {pendingLevel && inProgress && (
+        <div className="dialog-backdrop" onClick={() => setPendingLevel(null)}>
+          <div className="dialog" role="alertdialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
+            <h3>¿Empezar una partida nueva?</h3>
+            <p>
+              Tenés una partida de {LEVELS[inProgress.level].label} en curso ({formatTime(inProgress.seconds ?? 0)}). Si
+              empezás una de {LEVELS[pendingLevel].label}, la anterior se cierra y no cuenta para el ranking.
+            </p>
+            <div className="dialog-actions">
+              <button className="btn btn-primary" onClick={() => begin(pendingLevel)}>
+                Empezar {LEVELS[pendingLevel].label}
+              </button>
+              <button
+                className="btn btn-ghost"
+                onClick={() => {
+                  setPendingLevel(null)
+                  setView('game')
+                }}
+              >
+                Seguir la anterior
+              </button>
+              <button className="btn-text" onClick={() => setPendingLevel(null)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
