@@ -20,6 +20,7 @@ export default function App() {
   const [online, setOnline] = useState(!isOffline())
   const [pendingCount, setPendingCount] = useState(0)
   const [dataVersion, setDataVersion] = useState(0) // refresca rankings al sincronizar
+  const [generating, setGenerating] = useState(null) // nivel que se está armando
 
   // Sin conexión, la sesión puede no validarse: seguimos con el último perfil usado
   const offlineUser = () => {
@@ -91,11 +92,16 @@ export default function App() {
   const inProgress = game && !game.won ? game : null
 
   const begin = (level) => {
-    const g = { ...generate(level), id: Date.now() }
-    setGame(g)
-    saveProgress(userId, g)
     setPendingLevel(null)
-    setView('game')
+    setGenerating(level)
+    // Dejar que se pinte el aviso: los niveles altos tardan un momento en armarse
+    setTimeout(() => {
+      const g = { ...generate(level), id: Date.now() }
+      setGame(g)
+      saveProgress(userId, g)
+      setGenerating(null)
+      setView('game')
+    }, 60)
   }
 
   const requestNew = (level) => {
@@ -155,6 +161,15 @@ export default function App() {
         <Profile profile={profile} onChange={updateProfile} onBack={() => setView(inProgress ? 'game' : 'menu')} />
       ) : (
         <Menu key={dataVersion} profile={profile} current={inProgress} onResume={() => setView('game')} onStart={requestNew} />
+      )}
+
+      {generating && (
+        <div className="dialog-backdrop">
+          <div className="generating" role="status">
+            <Logo size="small" />
+            <span>Armando un tablero {LEVELS[generating].label.toLowerCase()}…</span>
+          </div>
+        </div>
       )}
 
       {pendingLevel && inProgress && (

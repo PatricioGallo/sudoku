@@ -2,6 +2,9 @@ import { useRef, useState } from 'react'
 import * as api from '@api'
 import Avatar from './Avatar.jsx'
 import { cacheProfile } from '../offline.js'
+import { LEVELS } from '../sudoku/generator.js'
+import { LEVEL_ORDER, describeUnlock, isUnlocked, nextUnlock, rankOf, unlockProgress, useStats } from '../levels.js'
+import { formatTime } from '../format.js'
 
 export default function Profile({ profile, onChange, onBack }) {
   const fileRef = useRef(null)
@@ -9,6 +12,9 @@ export default function Profile({ profile, onChange, onBack }) {
   const [pw, setPw] = useState({ current: '', next: '', repeat: '' })
   const [status, setStatus] = useState({}) // { photo|names|password: {ok|error, text} }
   const [busy, setBusy] = useState('')
+  const stats = useStats(profile.id)
+  const rank = rankOf(stats)
+  const next = nextUnlock(stats)
 
   const run = async (key, fn, okText) => {
     setBusy(key)
@@ -80,7 +86,36 @@ export default function Profile({ profile, onChange, onBack }) {
         <input ref={fileRef} type="file" accept="image/*" hidden onChange={onPhoto} />
         <h2>{[profile.first_name, profile.last_name].filter(Boolean).join(' ') || profile.username}</h2>
         <p className="handle">@{profile.username}</p>
+        <span className={`rank-badge rank-${rank}`}>Rango {LEVELS[rank].label}</span>
         <Msg k="photo" />
+      </section>
+
+      <section className="panel">
+        <h3>Tu camino</h3>
+        <p className="panel-note">
+          {next
+            ? `Para llegar a ${LEVELS[next.next].label}: ${describeUnlock(next.next).replace('Ganá', 'ganá')}. Llevás ${next.done} de ${next.need}.`
+            : 'Llegaste al rango más alto. Ahora, a bajar tus tiempos.'}
+        </p>
+        <ol className="ladder">
+          {LEVEL_ORDER.map((key) => {
+            const open = isUnlocked(key, stats)
+            const st = stats[key]
+            return (
+              <li key={key} className={`step step-${key} ${open ? 'is-open' : ''} ${key === rank ? 'is-rank' : ''}`}>
+                <span className="step-dot" aria-hidden="true">{open ? '' : '🔒'}</span>
+                <span className="step-name">{LEVELS[key].label}</span>
+                <span className="step-info">
+                  {open
+                    ? st
+                      ? `${st.wins} ${st.wins === 1 ? 'ganada' : 'ganadas'}, mejor ${formatTime(st.best)}`
+                      : 'Sin partidas'
+                    : `${unlockProgress(key, stats).done}/${unlockProgress(key, stats).need} para desbloquear`}
+                </span>
+              </li>
+            )
+          })}
+        </ol>
       </section>
 
       <form className="panel" onSubmit={saveNames}>

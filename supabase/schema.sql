@@ -132,4 +132,4 @@ revoke execute on function public.handle_new_user() from public, anon, authentic
 -- Niveles válidos
 alter table public.results drop constraint if exists results_level_check;
 alter table public.results add constraint results_level_check
-  check (level in ('principiante', 'facil', 'medio', 'dificil', 'experto'));
+  check (level in ('principiante', 'facil', 'medio', 'dificil', 'experto', 'maestro'));

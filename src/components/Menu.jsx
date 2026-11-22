@@ -1,34 +1,19 @@
-import { useEffect, useState } from 'react'
-import * as api from '@api'
 import { LEVELS } from '../sudoku/generator.js'
 import { formatTime } from '../format.js'
 import Ranking from './Ranking.jsx'
 import { progressPercent } from '../progress.js'
-import { cachedBests, cacheBests, pendingResults } from '../offline.js'
+import { LEVEL_ORDER, describeUnlock, isUnlocked, rankOf, unlockProgress, useStats } from '../levels.js'
 
 export default function Menu({ profile, current, onResume, onStart }) {
-  const [bests, setBests] = useState(() => cachedBests(profile.id))
-
-  useEffect(() => {
-    api
-      .myBests(profile.id)
-      .then((b) => {
-        setBests(b)
-        cacheBests(profile.id, b)
-      })
-      .catch(() => {})
-  }, [profile.id])
-
-  // Sumar las partidas jugadas sin conexión que todavía no se subieron
-  const shownBests = { ...bests }
-  for (const r of pendingResults(profile.id))
-    if (!shownBests[r.level] || r.seconds < shownBests[r.level]) shownBests[r.level] = r.seconds
+  const stats = useStats(profile.id)
+  const rank = rankOf(stats)
 
   return (
     <main className="menu">
       <h2 className="greeting">
         Hola, {profile.first_name || profile.username}. ¿Qué nivel jugás hoy?
       </h2>
+      <span className={`rank-badge rank-${rank} rank-inline`}>Rango {LEVELS[rank].label}</span>
 
       {current && (
         <button className={`resume resume-${current.level}`} onClick={onResume}>
@@ -41,27 +26,50 @@ export default function Menu({ profile, current, onResume, onStart }) {
           <span className="resume-progress" style={{ '--p': `${progressPercent(current)}%` }}>
             <b>{progressPercent(current)}%</b>
           </span>
-          <span className="resume-bar" aria-hidden="true">
-            <i style={{ width: `${progressPercent(current)}%` }} />
-          </span>
         </button>
       )}
 
       {current && <h3 className="section-label">O empezá una nueva</h3>}
 
       <div className="levels">
-        {Object.entries(LEVELS).map(([key, { label, clues }], idx) => (
-          <button key={key} className={`level level-${key}`} onClick={() => onStart(key)}>
-            <span className="level-meter" aria-hidden="true">
-              {[0, 1, 2, 3, 4].map((n) => (
-                <i key={n} className={n <= idx ? 'on' : ''} />
-              ))}
-            </span>
-            <span className="level-name">{label}</span>
-            <span className="level-meta">{clues} números de arranque</span>
-            <span className="level-best">{shownBests[key] ? `Mejor: ${formatTime(shownBests[key])}` : 'Sin récord'}</span>
-          </button>
-        ))}
+        {LEVEL_ORDER.map((key, idx) => {
+          const { label, clues, advanced } = LEVELS[key]
+          const open = isUnlocked(key, stats)
+          const prog = unlockProgress(key, stats)
+          const best = stats[key]?.best
+          return (
+            <button
+              key={key}
+              className={`level level-${key} ${open ? '' : 'is-locked'}`}
+              onClick={() => open && onStart(key)}
+              aria-disabled={!open}
+            >
+              <span className="level-meter" aria-hidden="true">
+                {LEVEL_ORDER.map((_, n) => (
+                  <i key={n} className={n <= idx ? 'on' : ''} />
+                ))}
+                {!open && <span className="lock">🔒</span>}
+              </span>
+              <span className="level-name">{label}</span>
+              <span className="level-meta">
+                {clues} números de arranque{advanced ? ', requiere técnicas avanzadas' : ''}
+              </span>
+              {open ? (
+                <span className="level-best">{best ? `Mejor: ${formatTime(best)}` : 'Sin récord'}</span>
+              ) : (
+                <span className="level-unlock">
+                  <span>{describeUnlock(key)}</span>
+                  <span className="unlock-bar" aria-label={`${prog.done} de ${prog.need}`}>
+                    <i style={{ width: `${(prog.done / prog.need) * 100}%` }} />
+                    <b>
+                      {prog.done}/{prog.need}
+                    </b>
+                  </span>
+                </span>
+              )}
+            </button>
+          )
+        })}
       </div>
 
       <Ranking profile={profile} />

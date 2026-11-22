@@ -140,11 +140,12 @@ export async function globalRanking(level, limit = 10) {
   return check(await sb.rpc('global_ranking', { lvl: level, lim: limit }))
 }
 
-export async function myBests(userId) {
-  const rows = check(await sb.from('results').select('level, seconds').eq('user_id', userId).order('seconds'))
-  const best = {}
-  for (const r of rows) best[r.level] ??= r.seconds
-  return best
+// Por nivel: mejor tiempo y cantidad de partidas ganadas
+// Todas las partidas ganadas (para mejores tiempos, desbloqueos y rango)
+export async function myResults(userId) {
+  return check(
+    await sb.from('results').select('level, seconds, errors, hints_used').eq('user_id', userId).order('seconds')
+  )
 }
 
 // Sube una sola vez los tiempos que estaban guardados en este navegador.

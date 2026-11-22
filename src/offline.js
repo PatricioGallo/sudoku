@@ -75,5 +75,5 @@ export function flushPending(userId) {
 const rankingKey = (scope, level, userId) => `sudoku.cache.ranking.${scope}.${level}.${scope === 'mine' ? userId : 'all'}`
 export const cachedRanking = (scope, level, userId) => read(rankingKey(scope, level, userId), null)
 export const cacheRanking = (scope, level, userId, rows) => write(rankingKey(scope, level, userId), rows)
-export const cachedBests = (userId) => read(`sudoku.cache.bests.${userId}`, {})
-export const cacheBests = (userId, b) => write(`sudoku.cache.bests.${userId}`, b)
+export const cachedStats = (userId) => read(`sudoku.cache.results.${userId}`, {})
+export const cacheStats = (userId, st) => write(`sudoku.cache.results.${userId}`, st)

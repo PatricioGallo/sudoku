@@ -6,7 +6,9 @@ App de sudoku en React + Vite.
 
 - Registro y login con usuario y contraseña
 - Perfil con foto, nombre, apellido y cambio de contraseña
-- 5 niveles: Principiante, Fácil, Medio, Difícil y Experto
+- 6 rangos/niveles: Novato, Principiante, Avanzado, Maestro, Gran maestro y Experto.
+  Cada uno se desbloquea ganando partidas del anterior (ver `src/levels.js`); el rango
+  del jugador es el nivel más alto desbloqueado y se ve en el perfil
 - Cronómetro (con pausa, y pausa automática al cambiar de pestaña)
 - Contador de errores
 - 3 pistas por partida
@@ -25,13 +27,14 @@ si hay más de una, lo vuelve a poner. Así **toda partida tiene una única solu
 
 El nivel se define por la cantidad de números iniciales:
 
-| Nivel        | Números iniciales |
-|--------------|-------------------|
-| Principiante | 46                |
-| Fácil        | 40                |
-| Medio        | 33                |
-| Difícil      | 27                |
-| Experto      | 23                |
+| Rango        | Números iniciales | Para desbloquear                                   |
+|--------------|-------------------|----------------------------------------------------|
+| Novato       | 46                | —                                                  |
+| Principiante | 40                | 3 ganadas en Novato                                |
+| Avanzado     | 33                | 5 ganadas en Principiante                          |
+| Maestro      | 27                | 7 ganadas en Avanzado con 3 errores o menos        |
+| Gran maestro | 23                | 10 ganadas en Maestro sin pistas                   |
+| Experto      | 22 + técnicas avanzadas | 12 ganadas en Gran maestro sin pistas y con 1 error como máximo |
 
 `npm test` genera 20 partidas por nivel y verifica que cada una tenga solución única.
 

@@ -151,11 +151,12 @@ export async function globalRanking(level, limit = 10) {
     .map((r) => ({ ...d.profiles[r.user_id], ...r }))
 }
 
-export async function myBests(userId) {
+export async function myResults(userId) {
   await net()
-  const best = {}
-  for (const r of db().results.filter((x) => x.user_id === userId).sort(byTime)) best[r.level] ??= r.seconds
-  return best
+  return db()
+    .results.filter((x) => x.user_id === userId)
+    .sort(byTime)
+    .map(({ level, seconds, errors, hints_used }) => ({ level, seconds, errors, hints_used }))
 }
 
 export async function migrateLocal(userId, username) {
