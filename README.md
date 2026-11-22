@@ -6,7 +6,7 @@ App de sudoku en React + Vite.
 
 - Registro y login con usuario y contraseña
 - Perfil con foto, nombre, apellido y cambio de contraseña
-- 6 niveles (Principiante, Fácil, Medio, Difícil, Experto, Maestro) que se desbloquean
+- 6 niveles (Principiante, Fácil, Medio, Difícil, Experto, Élite) que se desbloquean
   ganando partidas del nivel anterior
 - 6 rangos por puntos (Novato, Aprendiz, Avanzado, Maestro, Gran maestro, Leyenda):
   cada partida ganada suma puntos según nivel, tiempo, errores y pistas (ver `src/levels.js`)
@@ -36,7 +36,7 @@ El nivel se define por la cantidad de números iniciales:
 | Medio        | 33                       | 5 ganadas en Fácil            | 40          | 12 min          |
 | Difícil      | 27                       | 7 ganadas en Medio            | 80          | 18 min          |
 | Experto      | 23                       | 10 ganadas en Difícil         | 160         | 25 min          |
-| Maestro      | 22 + técnicas avanzadas  | 12 ganadas en Experto         | 320         | 35 min          |
+| Élite        | 22 + técnicas avanzadas  | 12 ganadas en Experto         | 320         | 35 min          |
 
 ### Rangos
 

@@ -8,7 +8,7 @@ export const LEVELS = {
   dificil: { label: 'Difícil', clues: 27 },
   experto: { label: 'Experto', clues: 23 },
   // El más alto: además de tener menos números, no se resuelve solo con lógica básica
-  maestro: { label: 'Maestro', clues: 22, advanced: true },
+  maestro: { label: 'Élite', clues: 22, advanced: true },
 }
 
 const PEERS = Array.from({ length: 81 }, (_, i) => {
