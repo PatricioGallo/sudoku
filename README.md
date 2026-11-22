@@ -6,10 +6,11 @@ App de sudoku en React + Vite.
 
 - Registro y login con usuario y contraseña
 - Perfil con foto, nombre, apellido y cambio de contraseña
-- 4 niveles: Principiante, Fácil, Medio y Difícil
+- 5 niveles: Principiante, Fácil, Medio, Difícil y Experto
 - Cronómetro (con pausa, y pausa automática al cambiar de pestaña)
 - Contador de errores
 - 3 pistas por partida
+- Anotaciones de candidatos en cada casilla (se borran solas al colocar un número)
 - Ranking global (mejor tiempo de cada jugador) y ranking personal, por nivel
 - Se juega con mouse/touch o con teclado (números, flechas, Backspace)
 - Funciona sin conexión: la app queda instalada (service worker) y las partidas
@@ -30,6 +31,7 @@ El nivel se define por la cantidad de números iniciales:
 | Fácil        | 40                |
 | Medio        | 33                |
 | Difícil      | 27                |
+| Experto      | 23                |
 
 `npm test` genera 20 partidas por nivel y verifica que cada una tenga solución única.
 

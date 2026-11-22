@@ -6,6 +6,7 @@ export const LEVELS = {
   facil: { label: 'Fácil', clues: 40 },
   medio: { label: 'Medio', clues: 33 },
   dificil: { label: 'Difícil', clues: 27 },
+  experto: { label: 'Experto', clues: 23 },
 }
 
 const boxOf = (i) => Math.floor(Math.floor(i / 9) / 3) * 3 + Math.floor((i % 9) / 3)
@@ -103,6 +104,18 @@ export function solve(grid, limit = 1, randomize = false) {
  */
 export function generate(level = 'facil') {
   const target = LEVELS[level]?.clues ?? LEVELS.facil.clues
+  // Con pocos números iniciales no todos los tableros llegan a la meta:
+  // se prueba con varios y se queda el que tenga menos números.
+  let best = null
+  for (let attempt = 0; attempt < 60; attempt++) {
+    const g = carve(target)
+    if (!best || g.clues < best.clues) best = g
+    if (best.clues <= target) break
+  }
+  return { puzzle: best.puzzle, solution: best.solution, level }
+}
+
+function carve(target) {
   const { solution } = solve(new Array(81).fill(0), 1, true)
   const puzzle = solution.slice()
   let clues = 81
@@ -115,5 +128,5 @@ export function generate(level = 'facil') {
     else clues--
   }
 
-  return { puzzle, solution, level }
+  return { puzzle, solution, clues }
 }

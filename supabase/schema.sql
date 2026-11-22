@@ -52,7 +52,7 @@ create trigger on_auth_user_created
 create table if not exists public.results (
   id bigint generated always as identity primary key,
   user_id uuid not null default auth.uid() references public.profiles (id) on delete cascade,
-  level text not null check (level in ('principiante', 'facil', 'medio', 'dificil')),
+  level text not null,
   seconds integer not null check (seconds > 0 and seconds < 86400),
   errors integer not null default 0 check (errors >= 0),
   hints_used integer not null default 0 check (hints_used between 0 and 3),
@@ -128,3 +128,8 @@ create policy "borrar mi avatar" on storage.objects
 
 -- La función del trigger no tiene que poder llamarse desde la API
 revoke execute on function public.handle_new_user() from public, anon, authenticated;
+
+-- Niveles válidos
+alter table public.results drop constraint if exists results_level_check;
+alter table public.results add constraint results_level_check
+  check (level in ('principiante', 'facil', 'medio', 'dificil', 'experto'));

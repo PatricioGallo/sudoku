@@ -25,6 +25,7 @@
   --lv-facil: var(--sky);
   --lv-medio: var(--saffron);
   --lv-dificil: var(--coral);
+  --lv-experto: #b98cff;
 
   --safe-t: env(safe-area-inset-top, 0px);
   --safe-r: env(safe-area-inset-right, 0px);
@@ -312,6 +313,8 @@ button:focus-visible, input:focus-visible {
 .level-facil { --lv: var(--lv-facil); }
 .level-medio { --lv: var(--lv-medio); }
 .level-dificil { --lv: var(--lv-dificil); color: #2a0a12; }
+.level-experto { --lv: var(--lv-experto); color: #1d0b3d; grid-column: 1 / -1; }
+.level-experto .level-meter { margin-bottom: 10px; }
 
 .level-meter { display: flex; gap: 4px; margin-bottom: 18px; }
 .level-meter i {
@@ -357,7 +360,7 @@ button:focus-visible, input:focus-visible {
 .tabs::-webkit-scrollbar { display: none; }
 .tab {
   flex: none;
-  padding: 7px 13px;
+  padding: 7px 11px;
   border-radius: 999px;
   font-size: 0.88rem;
   font-weight: 600;
@@ -369,6 +372,7 @@ button:focus-visible, input:focus-visible {
 .tab-facil[aria-selected='true'] { background: var(--lv-facil); }
 .tab-medio[aria-selected='true'] { background: var(--lv-medio); }
 .tab-dificil[aria-selected='true'] { background: var(--lv-dificil); }
+.tab-experto[aria-selected='true'] { background: var(--lv-experto); }
 
 .empty {
   margin: 6px 0 12px;
@@ -512,6 +516,7 @@ button:focus-visible, input:focus-visible {
 .level-pill-facil { background: var(--lv-facil); }
 .level-pill-medio { background: var(--lv-medio); }
 .level-pill-dificil { background: var(--lv-dificil); }
+.level-pill-experto { background: var(--lv-experto); }
 .clock {
   font-size: 2rem;
   font-weight: 800;
@@ -658,8 +663,8 @@ button:focus-visible, input:focus-visible {
 /* Herramientas */
 .toolbar {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
 }
 .tool {
   position: relative;
@@ -769,7 +774,8 @@ button:focus-visible, input:focus-visible {
   .logo-big { --s: min(22vw, 80px); }
 }
 @media (min-width: 600px) {
-  .levels { grid-template-columns: repeat(4, 1fr); }
+  .levels { grid-template-columns: repeat(5, 1fr); }
+  .level-experto { grid-column: auto; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -803,6 +809,7 @@ button:focus-visible, input:focus-visible {
 .resume-facil { --lv: var(--lv-facil); }
 .resume-medio { --lv: var(--lv-medio); }
 .resume-dificil { --lv: var(--lv-dificil); }
+.resume-experto { --lv: var(--lv-experto); }
 .resume-text { display: flex; flex-direction: column; gap: 2px; }
 .resume-title { font-size: 1.3rem; font-weight: 800; }
 .resume-meta { color: var(--text-dim); font-variant-numeric: tabular-nums; }
@@ -873,3 +880,52 @@ button:focus-visible, input:focus-visible {
   color: var(--ink);
   line-height: 1.4;
 }
+
+/* ---------- Anotaciones ---------- */
+.notes {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  width: 100%;
+  height: 100%;
+  padding: 2px;
+}
+.notes i {
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-size: clamp(0.55rem, 2.6vw, 0.78rem);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink-soft);
+}
+.notes i.hit {
+  color: var(--ink);
+  font-weight: 800;
+  background: #ffd970;
+  border-radius: 4px;
+}
+
+.tool-notes.is-on {
+  background: var(--paper);
+  border-color: var(--paper);
+  color: var(--ink);
+}
+.tool-notes.is-on .tool-icon { color: var(--pen); }
+.tool-switch {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  padding: 2px 5px;
+  border-radius: 6px;
+  background: rgb(255 255 255 / 0.1);
+}
+.tool-notes.is-on .tool-switch { background: var(--pen); color: white; }
+.tool-badge { right: 8px; top: 6px; }
+
+/* Teclado en modo notas: números chicos, como si fueran anotaciones */
+.numpad.is-notes button { background: #dfe5ff; box-shadow: 0 4px 0 #a9b4e6; }
+.numpad.is-notes .num { font-size: 1.15rem; font-weight: 600; color: var(--pen); align-self: flex-start; margin-left: 8px; }

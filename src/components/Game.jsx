@@ -6,6 +6,20 @@ import Ranking from './Ranking.jsx'
 
 const MAX_HINTS = 3
 
+// Casillas que comparten fila, columna o caja con `i`
+const PEERS = Array.from({ length: 81 }, (_, i) => {
+  const r = Math.floor(i / 9), c = i % 9
+  const br = r - (r % 3), bc = c - (c % 3)
+  const set = new Set()
+  for (let k = 0; k < 9; k++) {
+    set.add(r * 9 + k)
+    set.add(k * 9 + c)
+    set.add((br + Math.floor(k / 3)) * 9 + bc + (k % 3))
+  }
+  set.delete(i)
+  return [...set]
+})
+
 export default function Game({ game, profile, onProgress, onQueued, onNewGame, onExit }) {
   // `game` trae el tablero y, si se retoma, el progreso guardado
   const { puzzle, solution, level } = game
@@ -15,6 +29,9 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
   const [errors, setErrors] = useState(game.errors ?? 0)
   const [hintsLeft, setHintsLeft] = useState(game.hintsLeft ?? MAX_HINTS)
   const [seconds, setSeconds] = useState(game.seconds ?? 0)
+  // Anotaciones: por casilla, un número de 9 bits (bit d = candidato d)
+  const [notes, setNotes] = useState(() => (game.notes ? game.notes.slice() : Array(81).fill(0)))
+  const [notesMode, setNotesMode] = useState(false)
   const [paused, setPaused] = useState(false)
   const [won, setWon] = useState(false)
   const [saveState, setSaveState] = useState({ status: 'idle' }) // idle | saving | saved | error
@@ -39,8 +56,8 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
 
   // Guardar el progreso para poder retomar la partida
   useEffect(() => {
-    onProgress?.({ ...game, values, hinted: [...hinted], errors, hintsLeft, seconds, won })
-  }, [values, hinted, errors, hintsLeft, seconds, won]) // eslint-disable-line react-hooks/exhaustive-deps
+    onProgress?.({ ...game, values, notes, hinted: [...hinted], errors, hintsLeft, seconds, won })
+  }, [values, notes, hinted, errors, hintsLeft, seconds, won]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Detectar partida ganada y guardar en el ranking
   useEffect(() => {
@@ -61,18 +78,58 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
     }
   }, [values]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Al colocar un número correcto se borra de las anotaciones de su fila, columna y caja
+  const clearNotesFor = (i, digit) =>
+    setNotes((n) => {
+      const next = n.slice()
+      next[i] = 0
+      for (const p of PEERS[i]) next[p] &= ~(1 << digit)
+      return next
+    })
+
   const place = useCallback(
     (digit) => {
       if (selected === null || won || paused) return
       if (isGiven(selected) || isCorrect(selected)) return
+
+      // Modo notas: agrega o quita el candidato
+      if (notesMode && digit !== 0) {
+        if (values[selected]) return
+        setNotes((n) => {
+          const next = n.slice()
+          next[selected] ^= 1 << digit
+          return next
+        })
+        return
+      }
+
+      // Borrar: primero el número; si no hay, las anotaciones
+      if (digit === 0) {
+        if (values[selected]) {
+          setValues((v) => {
+            const next = v.slice()
+            next[selected] = 0
+            return next
+          })
+        } else if (notes[selected]) {
+          setNotes((n) => {
+            const next = n.slice()
+            next[selected] = 0
+            return next
+          })
+        }
+        return
+      }
+
       setValues((v) => {
         const next = v.slice()
         next[selected] = digit
         return next
       })
-      if (digit !== 0 && digit !== solution[selected]) setErrors((e) => e + 1)
+      if (digit !== solution[selected]) setErrors((e) => e + 1)
+      else clearNotesFor(selected, digit)
     },
-    [selected, won, paused, values] // eslint-disable-line react-hooks/exhaustive-deps
+    [selected, won, paused, values, notes, notesMode] // eslint-disable-line react-hooks/exhaustive-deps
   )
 
   const giveHint = () => {
@@ -89,6 +146,7 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
       next[target] = solution[target]
       return next
     })
+    clearNotesFor(target, solution[target])
     setHinted((h) => new Set(h).add(target))
     setHintsLeft((n) => n - 1)
     setSelected(target)
@@ -99,6 +157,7 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
     const onKey = (e) => {
       if (e.key >= '1' && e.key <= '9') place(Number(e.key))
       else if (e.key === 'Backspace' || e.key === 'Delete' || e.key === '0') place(0)
+      else if (e.key === 'n' || e.key === 'N') setNotesMode((m) => !m)
       else if (e.key.startsWith('Arrow')) {
         e.preventDefault()
         setSelected((s) => {
@@ -187,7 +246,17 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
                     onClick={() => setSelected(i)}
                     aria-label={`Fila ${Math.floor(i / 9) + 1}, columna ${(i % 9) + 1}${v ? `: ${v}` : ''}`}
                   >
-                    {v ? <span key={`${i}-${v}`}>{v}</span> : null}
+                    {v ? (
+                      <span key={`${i}-${v}`}>{v}</span>
+                    ) : notes[i] ? (
+                      <span className="notes" aria-hidden="true">
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
+                          <i key={d} className={d === selValue ? 'hit' : ''}>
+                            {notes[i] & (1 << d) ? d : ''}
+                          </i>
+                        ))}
+                      </span>
+                    ) : null}
                   </button>
                 )
               })}
@@ -202,7 +271,7 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
         )}
       </div>
 
-      <div className="numpad">
+      <div className={notesMode ? 'numpad is-notes' : 'numpad'}>
         {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
           <button key={d} onClick={() => place(d)} disabled={placedCount[d] >= 9}>
             <span className="num">{d}</span>
@@ -215,6 +284,15 @@ export default function Game({ game, profile, onProgress, onQueued, onNewGame, o
         <button className="tool" onClick={() => place(0)}>
           <span className="tool-icon" aria-hidden="true">⌫</span>
           Borrar
+        </button>
+        <button
+          className={notesMode ? 'tool tool-notes is-on' : 'tool tool-notes'}
+          onClick={() => setNotesMode((m) => !m)}
+          aria-pressed={notesMode}
+        >
+          <span className="tool-icon" aria-hidden="true">✎</span>
+          Notas
+          <span className="tool-switch">{notesMode ? 'ON' : 'OFF'}</span>
         </button>
         <button className="tool tool-hint" onClick={giveHint} disabled={hintsLeft === 0 || won}>
           <span className="tool-icon" aria-hidden="true">✦</span>

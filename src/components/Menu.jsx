@@ -53,7 +53,7 @@ export default function Menu({ profile, current, onResume, onStart }) {
         {Object.entries(LEVELS).map(([key, { label, clues }], idx) => (
           <button key={key} className={`level level-${key}`} onClick={() => onStart(key)}>
             <span className="level-meter" aria-hidden="true">
-              {[0, 1, 2, 3].map((n) => (
+              {[0, 1, 2, 3, 4].map((n) => (
                 <i key={n} className={n <= idx ? 'on' : ''} />
               ))}
             </span>
