@@ -87,6 +87,7 @@ returns table (
 )
 language sql
 stable
+set search_path = public
 as $$
   select b.user_id, p.username, p.first_name, p.last_name, p.avatar_url,
          b.seconds, b.errors, b.hints_used, b.created_at
@@ -124,3 +125,6 @@ drop policy if exists "borrar mi avatar" on storage.objects;
 create policy "borrar mi avatar" on storage.objects
   for delete to authenticated
   using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+
+-- La función del trigger no tiene que poder llamarse desde la API
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
